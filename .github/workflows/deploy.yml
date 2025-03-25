@@ -23,7 +23,4 @@ jobs:
       - name: Deploy to VM
         run: |
           # Copy files to the VM
-          gcloud compute scp --recurse . ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:/path/to/deploy --zone us-central1-a
-
-          # SSH into the VM and run deployment commands
-          gcloud compute ssh ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} --zone us-central1-a --command "cd /path/to/deploy && npm install && npm start"
+          gcloud compute scp --recurse . ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:/var/www/html/app.lekapp.cl --zone southamerica-west1-b
