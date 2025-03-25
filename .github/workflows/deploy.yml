@@ -1,0 +1,29 @@
+name: Deploy to Google Cloud VM
+
+on:
+  push:
+    branches:
+      - main  # Change this to your default branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          export_default_credentials: true
+
+      - name: Deploy to VM
+        run: |
+          # Copy files to the VM
+          gcloud compute scp --recurse . ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:/path/to/deploy --zone us-central1-a
+
+          # SSH into the VM and run deployment commands
+          gcloud compute ssh ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} --zone us-central1-a --command "cd /path/to/deploy && npm install && npm start"
