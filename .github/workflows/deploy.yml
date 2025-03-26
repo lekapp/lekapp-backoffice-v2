@@ -10,17 +10,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout the code from the repository
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # Step 2: Set up Google Cloud SDK
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          export_default_credentials: true
+          service_account_key: ${{ secrets.GCP_SA_KEY }}  # Your service account key stored in GitHub Secrets
+          project_id: ${{ secrets.GCP_PROJECT_ID }}  # Your Google Cloud project ID
+          export_default_credentials: true  # Export credentials for gcloud commands
 
+      # Step 3: Set up SSH key for connecting to the VM
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh  # Create the .ssh directory if it doesn't exist
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/google_compute_engine  # Add the private key from GitHub Secrets
+          chmod 600 ~/.ssh/google_compute_engine  # Set the correct permissions for the private key
+          ssh-keyscan ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts  # Add the VM's IP to known hosts to avoid SSH prompts
+
+      # Step 4: Deploy to the VM
       - name: Deploy to VM
         run: |
           # Copy files to the VM
           gcloud compute scp --recurse . ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:/var/www/html/app.lekapp.cl --zone southamerica-west1-b
+          # Optionally, you can run additional commands on the VM after copying files
+          gcloud compute ssh ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} --zone southamerica-west1-b --command "cd /var/www/html/app.lekapp.cl && npm install && npm start"
