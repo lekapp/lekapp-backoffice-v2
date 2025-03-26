@@ -48,7 +48,7 @@ jobs:
       # Step 6: Test SSH Connection
       - name: Test SSH Connection
         run: |
-          gcloud compute ssh lekappdev@$34.176.181.231 --zone southamerica-west1-b --command "ls /var/www/html/app.lekapp.cl"
+          gcloud compute ssh lekappdev@34.176.181.231 --zone southamerica-west1-b --command "ls /var/www/html/app.lekapp.cl"
 
       # Step 7: Deploy to the VM
       - name: Deploy to VM
