@@ -32,11 +32,6 @@ jobs:
           mkdir -p ~/.ssh  # Create the .ssh directory if it doesn't exist
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/google_compute_engine  # Add the private key from GitHub Secrets
           chmod 600 ~/.ssh/google_compute_engine  # Set the correct permissions for the private key
-          # Ensure the public key is not generated or overwritten
-          if [ ! -f ~/.ssh/google_compute_engine.pub ]; then
-            echo "Public key not found. Please ensure the public key is set in the VM instance metadata."
-            exit 1
-          fi
           ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts  # Add the VM's IP to known hosts to avoid SSH prompts
 
       # Step 5: Copy files to the VM
