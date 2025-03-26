@@ -4,14 +4,24 @@ require 'vendor/autoload.php';
 
 // Load the default .env file
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
+$dotenv->load(); // Load the default .env
+
+// Debugging output
+//echo 'CI_ENVIRONMENT: ' . ($_ENV['CI_ENVIRONMENT'] ?? 'Not set') . PHP_EOL;
 
 // Check if the CI_ENVIRONMENT variable is set and load the corresponding environment-specific file
 if (isset($_ENV['CI_ENVIRONMENT'])) {
 	$envFile = __DIR__ . '/.env.' . $_ENV['CI_ENVIRONMENT'];
+	//echo 'Environment File Path: ' . $envFile . PHP_EOL; // Debugging line
+
 	if (file_exists($envFile)) {
-		$dotenv->load($envFile);
+		//echo 'Loading environment file: ' . $envFile . PHP_EOL; // Debugging line
+		$dotenv->load($envFile); // Load the environment-specific .env file
+	} else {
+		//echo 'Environment file does not exist: ' . $envFile . PHP_EOL; // Debugging line
 	}
+} else {
+	//echo 'CI_ENVIRONMENT is not set.' . PHP_EOL; // Debugging line
 }
 
 /**
