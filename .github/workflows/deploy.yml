@@ -14,15 +14,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Step 2: Set up Google Cloud SDK
+      # Step 2: Authenticate to Google Cloud
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'  # Your service account key stored in GitHub Secrets
+
+      # Step 3: Set up Google Cloud SDK
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}  # Your service account key stored in GitHub Secrets
           project_id: ${{ secrets.GCP_PROJECT_ID }}  # Your Google Cloud project ID
-          export_default_credentials: true  # Export credentials for gcloud commands
+          install_components: 'beta'  # Optional: Install additional components if needed
 
-      # Step 3: Set up SSH key for connecting to the VM
+      # Step 4: Set up SSH key for connecting to the VM
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh  # Create the .ssh directory if it doesn't exist
@@ -32,9 +37,9 @@ jobs:
           if [ ! -f ~/.ssh/google_compute_engine.pub ]; then
             ssh-keygen -y -f ~/.ssh/google_compute_engine > ~/.ssh/google_compute_engine.pub
           fi
-          ssh-keyscan ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts  # Add the VM's IP to known hosts to avoid SSH prompts
+          ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts  # Add the VM's IP to known hosts to avoid SSH prompts
 
-      # Step 4: Deploy to the VM
+      # Step 5: Deploy to the VM
       - name: Deploy to VM
         run: |
           # Copy files to the VM
