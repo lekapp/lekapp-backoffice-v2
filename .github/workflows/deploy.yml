@@ -10,6 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      # Step 0: Debug entry parameters
+      - name: Debug Information
+        run: |
+          echo "SSH User: ${{ secrets.GCP_SSH_USER }}"
+          echo "VM IP: ${{ secrets.GCP_VM_IP }}"
+    
       # Step 1: Checkout the code from the repository
       - name: Checkout code
         uses: actions/checkout@v2
