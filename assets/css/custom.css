@@ -1,0 +1,11 @@
+/* your styles go here */
+
+.dashboard-counts {
+	padding-top: 10px !important;
+	padding-bottom: 20px !important;
+}
+
+.chart-container{
+	margin: auto;
+	position: relative;
+}

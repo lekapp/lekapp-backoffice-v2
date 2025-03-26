@@ -19,6 +19,9 @@ vendor/
 
 # Ignore environment files
 .env
+.env.development
+.env.production
+.env.testing
 
 # Ignore IDE files
 .idea/
