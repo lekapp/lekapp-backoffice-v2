@@ -20,23 +20,15 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'  # Your service account key
 
-      # Step 3: Set up SSH
-      - name: Set up SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/googlecloud  # Use your private key secret
-          chmod 600 ~/.ssh/googlecloud
-          ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts  # Add the VM's IP to known_hosts
-        
-      # Step 4: Deploy to Server
+      # Step 3: Deploy to Server
       - name: Deploy to Server
         run: |
           ssh -i ~/.ssh/googlecloud ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "
             if [ ! -d /var/www/html/app.lekapp.cl/.git ]; then
-              git clone git@github.com:lekapp/lekapp-backoffice-v2.git /var/www/html/app.lekapp.cl;
+              git clone https://github.com/lekapp/lekapp-backoffice-v2.git /var/www/html/app.lekapp.cl;  # Use HTTPS URL
             else
               cd /var/www/html/app.lekapp.cl
-              git remote set-url origin git@github.com:lekapp/lekapp-backoffice-v2.git;
+              git remote set-url origin https://github.com/lekapp/lekapp-backoffice-v2.git;  # Use HTTPS URL
               git pull origin main;
             fi
           "
