@@ -10,13 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-      # Step 0: Debug entry parameters
-      - name: Debug Information
-        run: |
-          echo "SSH User: ${{ secrets.GCP_SSH_USER }}"
-          echo "VM IP: ${{ secrets.GCP_VM_IP }}"
-    
       # Step 1: Checkout the code from the repository
       - name: Checkout code
         uses: actions/checkout@v2
@@ -46,8 +39,21 @@ jobs:
           fi
           ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts  # Add the VM's IP to known hosts to avoid SSH prompts
 
-      # Step 5: Deploy to the VM
+      # Step 5: Debug Information
+      - name: Debug Information
+        run: |
+          echo "SSH User is set."
+          echo "VM IP is set."
+
+      # Step 6: Test SSH Connection
+      - name: Test SSH Connection
+        run: |
+          gcloud compute ssh lekappdev@${{ secrets.GCP_VM_IP }} --zone southamerica-west1-b --command "ls /var/www/html/app.lekapp.cl"
+
+      # Step 7: Deploy to the VM
       - name: Deploy to VM
         run: |
           # Copy files to the VM
-          gcloud compute scp --recurse . ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:/var/www/html/app.lekapp.cl --zone southamerica-west1-b
+          gcloud compute scp --recurse . lekappdev@${{ secrets.GCP_VM_IP }}:/var/www/html/app.lekapp.cl --zone southamerica-west1-b
+          # Optionally, you can run additional commands on the VM after copying files
+          gcloud compute ssh lekappdev@${{ secrets.GCP_VM_IP }} --zone southamerica-west1-b --command "cd /var/www/html/app.lekapp.cl && npm install && npm start"
