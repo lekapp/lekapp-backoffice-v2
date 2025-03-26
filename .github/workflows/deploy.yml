@@ -48,12 +48,10 @@ jobs:
       # Step 6: Test SSH Connection
       - name: Test SSH Connection
         run: |
-          gcloud compute ssh lekappdev@${{ secrets.GCP_VM_IP }} --zone southamerica-west1-b --command "ls /var/www/html/app.lekapp.cl"
+          gcloud compute ssh lekappdev@$34.176.181.231 --zone southamerica-west1-b --command "ls /var/www/html/app.lekapp.cl"
 
       # Step 7: Deploy to the VM
       - name: Deploy to VM
         run: |
           # Copy files to the VM
-          gcloud compute scp --recurse . lekappdev@${{ secrets.GCP_VM_IP }}:/var/www/html/app.lekapp.cl --zone southamerica-west1-b
-          # Optionally, you can run additional commands on the VM after copying files
-          gcloud compute ssh lekappdev@${{ secrets.GCP_VM_IP }} --zone southamerica-west1-b --command "cd /var/www/html/app.lekapp.cl && npm install && npm start"
+          gcloud compute scp --recurse . lekappdev@34.176.181.231:/var/www/html/app.lekapp.cl --zone southamerica-west1-b
