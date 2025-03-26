@@ -1,0 +1,36 @@
+# Ignore system files
+/system/*
+!/system/index.html
+
+# Ignore application files
+/application/config/config.php
+/application/config/database.php
+/application/config/development/*
+/application/config/production/*
+/application/config/testing/*
+/application/logs/*
+/application/cache/*
+/application/logs/*
+/application/tmp/*
+/application/uploads/*
+
+# Ignore vendor files (if using Composer)
+vendor/
+
+# Ignore environment files
+.env
+
+# Ignore IDE files
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.vscode/
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore other files
+*.log
+*.sql
+*.sqlite
