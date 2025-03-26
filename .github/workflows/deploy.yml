@@ -20,7 +20,15 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'  # Your service account key
 
-      # Step 3: Deploy to Server
+      # Step 3: Set up SSH
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/googlecloud  # Use your private key secret
+          chmod 600 ~/.ssh/googlecloud
+          ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts  # Add the VM's IP to known_hosts
+        
+      # Step 4: Deploy to Server
       - name: Deploy to Server
         run: |
           ssh -i ~/.ssh/googlecloud ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "
