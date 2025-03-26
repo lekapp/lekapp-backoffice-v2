@@ -20,20 +20,13 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'  # Your service account key
 
-      # Step 3: Set up SSH key for connecting to the VM
-      - name: Set up SSH key
+      - name: Set up SSH
         run: |
-          mkdir -p ~/.ssh  # Create the .ssh directory if it doesn't exist
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/google_compute_engine  # Add the private key from GitHub Secrets
-          chmod 600 ~/.ssh/google_compute_engine  # Set the correct permissions for the private key
-          ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts  # Add the VM's IP to known hosts to avoid SSH prompts
-
-      # Step 4: Copy files to the VM
-      - name: Copy files to the VM
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/googlecloud  # Use custom private key name
+          chmod 600 ~/.ssh/googlecloud
+          ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
+        
+      - name: Deploy to Server
         run: |
-          gcloud compute scp --recurse . ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:/var/www/app.lekapp.cl --zone your-zone
-
-      # Step 5: (Optional) Run commands on the VM after copying files
-      #- name: Run commands on the VM
-      #  run: |
-      #    gcloud compute ssh ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} --zone your-zone --command "cd /var/www/app.lekapp.cl && php -S localhost:8080 -t ."
+          ssh -i ~/.ssh/googlecloud ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "cd /var/www/app.lekapp.cl && git pull origin main"
