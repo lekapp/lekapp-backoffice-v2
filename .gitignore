@@ -1,0 +1,68 @@
+# Ignore system files
+/system/*
+!system/index.html
+
+# Ignore application files
+/application/config/config.php
+/application/config/database.php
+/application/config/autoload.php
+/application/config/hooks.php
+/application/config/routes.php
+/application/config/constants.php
+/application/config/migration.php
+/application/config/foreign_keys.php
+/application/config/validation.php
+/application/config/email.php
+/application/config/ion_auth.php
+/application/config/your_custom_config.php
+
+# Ignore environment files
+/.env
+/.env.local
+/.env.production
+/.env.development
+
+# Ignore logs and cache
+/application/logs/*
+/application/cache/*
+!application/logs/index.html
+!application/cache/index.html
+
+# Ignore vendor files (if using Composer)
+vendor/
+
+# Ignore IDE and OS specific files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+.idea/
+.vscode/
+
+# Ignore other sensitive files
+*.sql
+*.sqlite
+*.db
+*.log
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Ignore node_modules if using Node.js
+node_modules/
+
+# Ignore compiled files
+*.class
+*.o
+*.so
+*.exe
+*.dll
+
+# Ignore backup files
+*~
+*.bak
+*.tmp
