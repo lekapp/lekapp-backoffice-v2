@@ -29,4 +29,4 @@ jobs:
         
       - name: Deploy to Server
         run: |
-          ssh -i ~/.ssh/googlecloud ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "cd /var/www/app.lekapp.cl && git pull origin main"
+          ssh -i ~/.ssh/googlecloud ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "cd /var/www/html/app.lekapp.cl && git pull origin main"
