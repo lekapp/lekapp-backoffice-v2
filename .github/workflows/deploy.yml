@@ -18,14 +18,13 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'  # Your service account key stored in GitHub Secrets
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'  # Your service account key
 
       # Step 3: Set up Google Cloud SDK
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}  # Your Google Cloud project ID
-          install_components: 'beta'  # Optional: Install additional components if needed
 
       # Step 4: Set up SSH key for connecting to the VM
       - name: Set up SSH key
@@ -33,25 +32,15 @@ jobs:
           mkdir -p ~/.ssh  # Create the .ssh directory if it doesn't exist
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/google_compute_engine  # Add the private key from GitHub Secrets
           chmod 600 ~/.ssh/google_compute_engine  # Set the correct permissions for the private key
-          # Generate the public key if it doesn't exist
-          if [ ! -f ~/.ssh/google_compute_engine.pub ]; then
-            ssh-keygen -y -f ~/.ssh/google_compute_engine > ~/.ssh/google_compute_engine.pub
-          fi
           ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts  # Add the VM's IP to known hosts to avoid SSH prompts
 
-      # Step 5: Debug Information
-      - name: Debug Information
+      # Step 5: Copy files to the VM
+      - name: Copy files to the VM
         run: |
-          echo "SSH User is set."
-          echo "VM IP is set."
+          gcloud compute scp --recurse . ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:/var/www/html/app.lekapp.cl --zone southamerica-west1-b
 
-      # Step 6: Test SSH Connection
-      - name: Test SSH Connection
-        run: |
-          gcloud compute ssh lekappdev@${{ secrets.GCP_VM_IP }} --zone southamerica-west1-b --command "ls /var/www/html/app.lekapp.cl" || echo "SSH connection failed."
-
-      # Step 7: Deploy to the VM
-      - name: Deploy to VM
-        run: |
-          # Copy files to the VM
-          gcloud compute scp --recurse . lekappdev@${{ secrets.GCP_VM_IP }}:/var/www/html/app.lekapp.cl --zone southamerica-west1-b
+      # Step 6: (Optional) Run commands on the VM after copying files
+      # Uncomment and customize the following lines if you want to run commands on the VM
+      # - name: Run commands on the VM
+      #   run: |
+      #     gcloud compute ssh ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} --zone southamerica-west1-b --command "cd /var/www/html/app.lekapp.cl && npm install && npm start"
