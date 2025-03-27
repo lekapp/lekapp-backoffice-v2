@@ -4,7 +4,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST");
 
-class Api extends CI_Controller
+class Api extends MY_Controller
 {
     /**
      * Index Page for this controller.
@@ -21,12 +21,16 @@ class Api extends CI_Controller
      * map to /index.php/welcome/<method_name>
      * @see https://codeigniter.com/user_guide/general/urls.html
      */
-    function __construct()
+    public function __construct()
     {
         parent::__construct();
         $this->load->model('web');
         $this->load->library('session');
         $this->load->model('user');
+    }
+
+    public function index(){
+        echo "API";
     }
 
     //worker
