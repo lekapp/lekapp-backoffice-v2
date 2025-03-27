@@ -22,6 +22,10 @@ class App extends CI_Controller
     log_message('info', 'Api.php loaded');
   }
 
+  public function index(){
+    echo "API";
+  }
+
   private function getDecodedPayload()
   {
     $body = $this->security->xss_clean($this->input->raw_input_stream);
