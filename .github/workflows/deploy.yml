@@ -13,7 +13,17 @@ jobs:
       # Step 1: Checkout the code from the repository
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Fetch all history for all branches
 
+      - name: Set Git configuration
+        run: |
+          git config pull.rebase false  # or true, depending on your preference
+          git config pull.ff only        # or omit this line if you want to allow merges
+
+      - name: Pull latest changes
+        run: git pull origin main
+        
       # Step 2: Authenticate to Google Cloud
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
