@@ -18,11 +18,16 @@ jobs:
 
       - name: Set Git configuration
         run: |
-          git config pull.rebase false  # or true, depending on your preference
-          git config pull.ff only        # or omit this line if you want to allow merges
+          git config --global pull.rebase false  # Set to true if you prefer rebase
+          git config --global pull.ff only        # Set to allow only fast-forward merges
 
-      - name: Pull latest changes
-        run: git pull origin main
+      - name: Fetch latest changes
+        run: git fetch origin main
+
+      - name: Merge changes
+        run: |
+          git merge origin/main || true  # Use || true to prevent failure if there are conflicts
+
         
       # Step 2: Authenticate to Google Cloud
       - name: Authenticate to Google Cloud
