@@ -37,3 +37,7 @@ Thumbs.db
 *.log
 *.sql
 *.sqlite
+
+# Ignore main index
+
+index.php
