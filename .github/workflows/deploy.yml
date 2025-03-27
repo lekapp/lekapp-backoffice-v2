@@ -16,19 +16,6 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history for all branches
 
-      - name: Set Git configuration
-        run: |
-          git config --global pull.rebase false  # Set to true if you prefer rebase
-          git config --global pull.ff only        # Set to allow only fast-forward merges
-
-      - name: Fetch latest changes
-        run: git fetch origin main
-
-      - name: Merge changes
-        run: |
-          git merge origin/main || true  # Use || true to prevent failure if there are conflicts
-
-        
       # Step 2: Authenticate to Google Cloud
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -52,6 +39,7 @@ jobs:
             else
               cd /var/www/html/app.lekapp.cl
               git remote set-url origin https://github.com/lekapp/lekapp-backoffice-v2.git;  # Use HTTPS URL
-              git pull origin main;
+              git fetch origin
+              git reset --hard origin/main  # Reset local branch to match remote
             fi
           "
