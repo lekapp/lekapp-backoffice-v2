@@ -2086,14 +2086,6 @@ class Building_sites extends CI_Controller
 		// 		)
 		// 	)
 		// );
-		$workers = $this->worker->obtener_ordenado(
-			array(
-				array(
-					'fk_speciality_role' => $speciality_role_id
-				)
-			)
-		);
-		$data[0]->workers = $workers;
 		$add_lib = array(
 			'js_lib' => array(
 				//asset_js( '...' ),
