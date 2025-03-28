@@ -21,7 +21,7 @@
 			</header>
 
 			<?php
-			$this->load->view(SPATH . 'worker_add_content',  array('speciality_role_id' => $speciality_role_id, 'error' => $error));
+			$this->load->view(SPATH . 'worker_add_content');
 			?>
 
 			<?php

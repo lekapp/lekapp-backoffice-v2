@@ -10,7 +10,7 @@
 					</div>
 
 					<div class="card-close">
-						<a href="<?php echo base_url('building_sites/edit_speciality_role/' . $user->speciality_role[0]->id) ?>" class="dropdown-item">
+						<a href="<?php echo base_url('building_sites/edit_speciality_role/' . $user->building_site->id) ?>" class="dropdown-item">
 							<i class="fa fa-arrow-left"></i>
 						</a>
 					</div>
@@ -21,11 +21,9 @@
 							'method' =>	'post',
 							'class'	=> 'form-horizontal'
 						);
-						echo form_open_multipart('building_sites/add_worker/' . $user->speciality_role[0]->id, $attr); 
+						echo form_open_multipart('building_sites/add_worker/' . $user->building_site->id, $attr); 
 
-						echo form_hidden('fk_building_site', $user->speciality_role[0]->fk_building_site);
-						echo form_hidden('fk_speciality', $user->speciality_role[0]->fk_speciality);
-						echo form_hidden('fk_speciality_role', $user->speciality_role[0]->id);
+						echo form_hidden('fk_building_site', $user->building_site->id);
 						?>
 						<div class="form-group row">
 							<label class="col-sm-2 form-control-label" for="Nombre">Nombre</label>

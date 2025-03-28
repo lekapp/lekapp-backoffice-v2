@@ -555,6 +555,7 @@ class Building_sites extends CI_Controller
 		$this->load->model('activity');
 		$this->load->model('activity_data');
 		$this->load->model('milestone');
+		$this->load->model('worker');
 		$user = $this->user->obtener(
 			array(
 				array(
@@ -656,6 +657,13 @@ class Building_sites extends CI_Controller
 				)
 			)
 		);
+		$workers = $this->worker->obtener(
+			array(
+				array(
+					'fk_building_site' => $building_site_id
+				)
+			)
+		);
 		$hh_total = 0;
 		$activity_dates = array();
 		$c_activity_dates = array();
@@ -707,7 +715,7 @@ class Building_sites extends CI_Controller
 			$this->form_validation->set_rules('fk_contractor', 'Mandante', 'required');
 			if ($this->form_validation->run() == FALSE) {
 				$this->load->view(CPATH . 'head', $this->web->get_header('Editar Rol Especialidad', $add_lib));
-				$this->load->view(SPATH . 'building_site_edit_structure', array('user' => $user[0], 'data' => $data[0], 'clients' => $clients_array, 'contractors' => $contractors_array, 'specialities' => $specialities, 'areas' => $areas, 'milestones' => $milestones));
+				$this->load->view(SPATH . 'building_site_edit_structure', array('user' => $user[0], 'data' => $data[0], 'clients' => $clients_array, 'contractors' => $contractors_array, 'specialities' => $specialities, 'areas' => $areas, 'milestones' => $milestones, 'workers' => $workers, 'activities_data' => $activities_data, 'activity_dates' => $activity_dates, 'c_activity_dates' => $c_activity_dates));
 				$this->load->view(CPATH . 'foot');
 			} else {
 				$config = $this->web->get_upload_config('spreadsheet');
@@ -1303,7 +1311,7 @@ class Building_sites extends CI_Controller
 			}
 		} else {
 			$this->load->view(CPATH . 'head', $this->web->get_header('Editar Obra', $add_lib));
-			$this->load->view(SPATH . 'building_site_edit_structure', array('user' => $user[0], 'data' => $data[0], 'clients' => $clients_array, 'contractors' => $contractors_array, 'specialities' => $specialities, 'areas' => $areas, 'milestones' => $milestones));
+			$this->load->view(SPATH . 'building_site_edit_structure', array('user' => $user[0], 'data' => $data[0], 'clients' => $clients_array, 'contractors' => $contractors_array, 'specialities' => $specialities, 'areas' => $areas, 'milestones' => $milestones, 'workers' => $workers));
 			$this->load->view(CPATH . 'foot');
 		}
 	}
@@ -4204,7 +4212,7 @@ class Building_sites extends CI_Controller
 	/**
 	 * add worker form
 	 */
-	public function add_worker($speciality_role_id = 0)
+	public function add_worker($building_site_id = 0)
 	{
 		$logged_in = $this->session->userdata('logged_in');
 		if ($logged_in == FALSE) {
@@ -4219,14 +4227,14 @@ class Building_sites extends CI_Controller
 				)
 			)
 		);
-		$speciality_role = $this->speciality_role->obtener(
+		$building_site = $this->building_site->obtener(
 			array(
 				array(
-					'id' => $speciality_role_id
+					'id' => $building_site_id
 				)
 			)
 		);
-		$user[0]->speciality_role = $speciality_role;
+		$user[0]->building_site = $building_site[0];
 		// $user[0]->speciality_role[0]->fk_building_site;
 		// d($user[0]->speciality_role[0]->fk_building_site);
 		$add_lib = array(
@@ -4244,7 +4252,7 @@ class Building_sites extends CI_Controller
 			$this->form_validation->set_rules('name', 'Nombre', 'trim|required');
 			// check check_email_unique id = 0 when add worker
 			// validar que no existe el email en la base de datos
-			$this->form_validation->set_rules('email', 'Email', 'trim|required|valid_email|callback_check_email_unique[' . $user[0]->speciality_role[0]->fk_building_site . ']');
+			$this->form_validation->set_rules('email', 'Email', 'trim|required|valid_email|callback_check_email_unique[' . $building_site_id . ']');
 			$this->form_validation->set_rules('password', 'Contraseña', 'trim|required');
 			$this->form_validation->set_rules('dni', 'RUT/DNI', 'trim|required');
 			if ($this->form_validation->run() == FALSE) {
@@ -4258,7 +4266,7 @@ class Building_sites extends CI_Controller
 				$this->load->view(CPATH . 'foot');
 			} else {
 				$new = $this->worker->insertar();
-				redirect('building_sites/edit_speciality_role/' . $speciality_role_id);
+				redirect('building_sites/edit/' . $building_site_id);
 			}
 		} else {
 			$this->load->view(CPATH . 'head', $this->web->get_header('Añadir Trabajador', $add_lib));
@@ -4315,8 +4323,6 @@ class Building_sites extends CI_Controller
 				$this->worker->actualizar(
 					$data[0]->id,
 					$data[0]->fk_building_site,
-					$data[0]->fk_speciality,
-					$data[0]->fk_speciality_role,
 					$this->input->post('name'),
 					$this->input->post('email'),
 					$this->input->post('dni'),
@@ -4324,7 +4330,7 @@ class Building_sites extends CI_Controller
 				if (strlen($this->input->post('password')) > 0) {
 					$this->worker->actualizar_llave($data[0]->id, $this->input->post('password'));
 				}
-				redirect('building_sites/edit_speciality_role/' . $data[0]->fk_speciality_role);
+				redirect('building_sites/edit/' . $data[0]->fk_building_site);
 			}
 		} else {
 			$this->load->view(CPATH . 'head', $this->web->get_header('Editar Trabajador', $add_lib));

@@ -10,7 +10,7 @@
 					</div>
 
 					<div class="card-close">
-						<a href="<?php echo base_url('building_sites/edit_speciality_role/' . $data->speciality_role->id) ?>"
+						<a href="<?php echo base_url('building_sites/edit/' . $data->building_site->id) ?>"
 							class="dropdown-item">
 							<i class="fa fa-arrow-left"></i>
 						</a>
@@ -25,9 +25,7 @@
 						);
 						echo form_open_multipart('building_sites/edit_worker/' . $data->id, $attr);
 
-						echo form_hidden('fk_building_site', $data->speciality_role->fk_building_site);
-						echo form_hidden('fk_speciality', $data->speciality_role->fk_speciality);
-						echo form_hidden('fk_speciality_role', $data->speciality_role->id);
+						echo form_hidden('fk_building_site', $data->building_site->id);
 						?>
 						<div class="form-group row">
 							<label class="col-sm-2 form-control-label" for="Nombre">Nombre</label>
