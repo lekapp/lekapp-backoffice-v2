@@ -13,6 +13,8 @@ jobs:
       # Step 1: Checkout the code from the repository
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Fetch all history for all branches
 
       # Step 2: Authenticate to Google Cloud
       - name: Authenticate to Google Cloud
@@ -37,6 +39,7 @@ jobs:
             else
               cd /var/www/html/app.lekapp.cl
               git remote set-url origin https://github.com/lekapp/lekapp-backoffice-v2.git;  # Use HTTPS URL
-              git pull origin main;
+              git fetch origin
+              git reset --hard origin/main  # Reset local branch to match remote
             fi
           "
