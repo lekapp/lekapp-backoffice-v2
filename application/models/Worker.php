@@ -72,6 +72,7 @@ class Worker extends CI_Model {
 		foreach ($query->result() as $row){
 			$row->building_site 	    = $building_sites[$row->fk_building_site];
 			$Data[] = $row;
+			
 		}
 		return $Data;
 	}
