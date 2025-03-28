@@ -61,7 +61,7 @@ class Speciality_role extends CI_Model {
 
 		$specialities = $this->speciality->obtener_ordenado();
 		$building_sites = $this->building_site->obtener_ordenado();
-
+ 
 		$this->db->select("*");
 		if(is_array($conditions) && sizeof($conditions) > 0){
 			foreach($conditions as $condition){
