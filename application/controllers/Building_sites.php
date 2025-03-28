@@ -4358,7 +4358,7 @@ class Building_sites extends CI_Controller
 		foreach ($sru as $v) {
 			$this->worker->borrar($v->id);
 		}
-		redirect('building_sites/edit_speciality_role/' . $v->fk_speciality_role);
+		redirect('building_sites/edit/' . $v->fk_building_site);
 	}
 	/**
 	 * validar que no exista el email en la BD en la tabla workers para esa obra = building_site_id
