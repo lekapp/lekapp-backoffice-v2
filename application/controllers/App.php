@@ -674,6 +674,13 @@ class App extends CI_Controller
           )
         );
 
+        echo json_encode(
+          [
+            'status' => 'success',
+            'message' => 'Sincronización exitosa',
+          ]
+        );
+
       } elseif ($signinType == 'worker') {
 
         $this->db->set('fk_building_site', $payload['fk_building_site']);
