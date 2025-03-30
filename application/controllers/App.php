@@ -476,7 +476,7 @@ class App extends CI_Controller
           //append activity->speciality_role and activity->zone to each activity
 
           foreach ($data[$k]->activities as $kk => $activity) {
-            $data[$k]->activities[$kk]->role = $this->db
+            $data[$k]->activities[$kk]->speciality_role = $this->db
               ->select('id, name')
               ->from('speciality_role')
               ->where('id', $activity->fk_speciality_role)
