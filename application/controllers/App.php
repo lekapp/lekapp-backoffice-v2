@@ -663,6 +663,17 @@ class App extends CI_Controller
 
       if ($signinType == 'overseer') {
 
+        $date = new DateTime('NOW', new DateTimeZone('America/Santiago'));
+
+        log_message('error', 
+          json_encode(
+            [
+              'date' => $date->format('Y-m-d H:i:s'),
+              'payload' => $payload
+            ]
+          )
+        );
+
       } elseif ($signinType == 'worker') {
 
         $this->db->set('fk_building_site', $payload['fk_building_site']);
