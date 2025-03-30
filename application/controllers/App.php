@@ -464,7 +464,7 @@ class App extends CI_Controller
 
       foreach ($data as $k => $buildingSite) {
         $data[$k]->activities = $this->db
-          ->select('id, name, fk_zone, unt, qty, eff, activity_code')
+          ->select('id, name, fk_area, fk_zone, unt, qty, eff, activity_code')
           ->from('activity')
           ->where('fk_building_site', $buildingSite->id)
           ->get()->result();
@@ -521,6 +521,7 @@ class App extends CI_Controller
           ->where('email', $payload['username'])
           ->where('password', pack('H*', hash('sha512', $payload['password'])))
           ->where('role.value_p', 'Supervisores')
+          ->where('deleted_at', null)
           ->get()->row();
 
         if (!$user) {
