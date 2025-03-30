@@ -464,7 +464,7 @@ class App extends CI_Controller
 
       foreach ($data as $k => $buildingSite) {
         $data[$k]->activities = $this->db
-          ->select('id, name, fk_area, fk_zone, unt, qty, eff, activity_code')
+          ->select('id, name, fk_zone, unt, qty, eff, activity_code')
           ->from('activity')
           ->where('fk_building_site', $buildingSite->id)
           ->get()->result();
