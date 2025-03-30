@@ -674,7 +674,8 @@ class App extends CI_Controller
           )
         );
 
-        $registryList = $payload['payload'];
+        $registryList = json_decode($payload);
+        $registryList = $registryList->payload;
 
         foreach($registryList as $registry){
           $hh = $registry['hh'];
