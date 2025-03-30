@@ -464,7 +464,7 @@ class App extends CI_Controller
 
       foreach ($data as $k => $buildingSite) {
         $data[$k]->activities = $this->db
-          ->select('id, name, fk_zone, unt, qty, eff, activity_code')
+          ->select('id, name, fk_zone, fk_speciality_role, unt, qty, eff, activity_code')
           ->from('activity')
           ->where('fk_building_site', $buildingSite->id)
           ->get()->result();
@@ -472,6 +472,27 @@ class App extends CI_Controller
         if (!$data[$k]->activities) {
           unset($data[$k]);
           //throw new Exception('Activity not found at building site ' . $buildingSite->name);
+        } else {
+          //append activity->speciality_role and activity->zone to each activity
+
+          foreach ($data[$k]->activities as $kk => $activity) {
+            $data[$k]->activities[$kk]->role = $this->db
+              ->select('id, name')
+              ->from('speciality_role')
+              ->where('id', $activity->fk_speciality_role)
+              ->get()->row();
+
+            $data[$k]->activities[$kk]->zone = $this->db
+              ->select('id, name')
+              ->from('zone')
+              ->where('id', $activity->fk_zone)
+              ->get()->row();
+
+            if (!$data[$k]->activities[$kk]->zone) {
+              unset($data[$k]->activities[$kk]);
+              //throw new Exception('Zone not found at activity ' . $activity->name . ' of building site ' . $buildingSite->name);
+            }
+          }
         }
 
       }
