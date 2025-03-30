@@ -659,7 +659,7 @@ class App extends CI_Controller
 
       $payload = json_decode(file_get_contents('php://input'), true);
 
-      $user = (object) $payload['user'];
+      //$user = (object) $payload['user'];
 
       if ($signinType == 'overseer') {
 
@@ -673,6 +673,37 @@ class App extends CI_Controller
             ]
           )
         );
+
+        $registryList = $payload['payload'];
+
+        foreach($registryList as $registry){
+          $hh = $registry['hh'];
+          $activityDate = $registry['activity_date']; //comes in format Y-m-d
+          $comment = $registry['comment'];
+          $machinery = $registry['machinery'];
+          $imageBase64 = $registry['image'];
+          $avance = $registry['avance'];
+          $activityId = $registry['fk_activity'];
+          $buildingSiteId = $registry['fk_building_site'];
+          //workerActivities TODO
+
+          $activity = $this->db->select('activity_code, qty, fk_speciality, fk_speciality_role')->from('activity')->where('id', $activityId)->get()->row();
+
+          $this->db->set('activity_code', $activity->activity_code);
+          $this->db->set('activity_date', $activityDate);
+          $this->db->set('activity_date_f', strtotime($activityDate) / 86400);
+          $this->db->set('hh', $hh);
+          $this->db->set('comment', $comment);
+          $this->db->set('machinery', $machinery);
+          $this->db->set('avance', $avance);
+          $this->db->set('p_avance', round($avance / $activity->qty * 100, 2));
+          $this->db->set('fk_speciality', $activity->fk_speciality);
+          $this->db->set('fk_speciality_role', $activity->fk_speciality_role);
+          $this->db->set('fk_image', 0);
+          $this->db->set('workers', 0);
+          $this->db->set('fk_building_site', $buildingSiteId);
+          $this->db->insert('activity_registry');
+        }
 
         echo json_encode(
           [
