@@ -463,6 +463,14 @@ class App extends CI_Controller
       //add activities and activity_data to building sites
 
       foreach ($data as $k => $buildingSite) {
+
+        $data[$k]->workers = $this->db
+          ->select('id, dni, name, email, fk_building_site')
+          ->from('worker')
+          ->where('fk_building_site', $buildingSite->id)
+          ->where('deleted_at', null)
+          ->get()->result(); 
+
         $data[$k]->activities = $this->db
           ->select('id, name, fk_zone, fk_speciality_role, unt, qty, eff, activity_code')
           ->from('activity')
