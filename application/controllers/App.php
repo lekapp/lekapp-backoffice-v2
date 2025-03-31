@@ -693,6 +693,7 @@ class App extends CI_Controller
           $avance = $registry->avance;
           $activityId = $registry->fk_activity;
           $buildingSiteId = $registry->fk_building_site;
+          $workerActivities = $registry->workerActivities;
           //workerActivities TODO
 
           $imageId = 0;
@@ -742,6 +743,18 @@ class App extends CI_Controller
           $this->db->set('fk_activity', $activityId);
           $this->db->set('fk_building_site', $buildingSiteId);
           $this->db->insert('activity_registry');
+
+          foreach($workerActivities as $workerActivity){
+
+            $worker = $this->db->select('id')->from('worker')->where('dni', $workerActivity->dni)->get()->row();
+
+            $this->db->set('fk_building_site', $buildingSiteId);
+            $this->db->set('fk_worker', $worker->id);
+            $this->db->set('code', $workerActivity->code);
+            $this->db->set('hh', 9);
+            $this->db->set('date', $activityDate);
+            $this->db->insert('worker_activity');
+          }
           
         }
 
