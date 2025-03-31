@@ -677,14 +677,14 @@ class App extends CI_Controller
         $registryList = json_decode($payload['payload']);
 
         foreach($registryList as $registry){
-          $hh = $registry['hh'];
-          $activityDate = $registry['activity_date']; //comes in format Y-m-d
-          $comment = $registry['comment'];
-          $machinery = $registry['machinery'];
-          $imageBase64 = $registry['image'];
-          $avance = $registry['avance'];
-          $activityId = $registry['fk_activity'];
-          $buildingSiteId = $registry['fk_building_site'];
+          $hh = $registry->hh;
+          $activityDate = $registry->activity_date; //comes in format Y-m-d
+          $comment = $registry->comment;
+          $machinery = $registry->machinery;
+          $imageBase64 = $registry->image;
+          $avance = $registry->avance;
+          $activityId = $registry->fk_activity;
+          $buildingSiteId = $registry->fk_building_site;
           //workerActivities TODO
 
           $activity = $this->db->select('activity_code, qty, fk_speciality, fk_speciality_role')->from('activity')->where('id', $activityId)->get()->row();
