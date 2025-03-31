@@ -701,6 +701,7 @@ class App extends CI_Controller
           $this->db->set('fk_speciality_role', $activity->fk_speciality_role);
           $this->db->set('fk_image', 0);
           $this->db->set('workers', 0);
+          $this->db->set('fk_activity', $activityId);
           $this->db->set('fk_building_site', $buildingSiteId);
           $this->db->insert('activity_registry');
         }
