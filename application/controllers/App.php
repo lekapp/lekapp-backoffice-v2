@@ -750,7 +750,7 @@ class App extends CI_Controller
 
             $this->db->set('fk_building_site', $buildingSiteId);
             $this->db->set('fk_worker', $worker->id);
-            $this->db->set('code', $workerActivity->code);
+            $this->db->set('code', $activity->activity_code);
             $this->db->set('hh', 9);
             $this->db->set('date', $activityDate);
             $this->db->insert('worker_activity');
