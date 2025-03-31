@@ -687,6 +687,36 @@ class App extends CI_Controller
           $buildingSiteId = $registry->fk_building_site;
           //workerActivities TODO
 
+          $imageId = 0;
+
+          if (trim($imageBase64 != "")) {
+            $imageType = $this->db->select('id, code_name')->from('image_type')->where('code_name', 'activity_report')->get()->row();
+            $this->db->set('fk_image_type', $imageType->id);
+            $this->db->set('name', '');
+            $this->db->set('ext', '');
+            $this->db->insert('image');
+            $imageId = $this->db->insert_id();
+
+            $config = $this->web->get_upload_config('activity_report');
+            $config['upload_path'] = $config['upload_path'] . $imageId . '/';
+            if (!is_dir($config['upload_path'])) {
+              mkdir($config['upload_path'], 0777, true);
+            }
+
+            $decodedImageFile = base64_decode($imageBase64);
+
+            $dt = new DateTime('NOW', new DateTimeZone('America/Santiago'));
+            $name = md5($dt->format('dmYHis') . $imageId);
+            $ext = ".jpg";
+
+            file_put_contents(FCPATH . $config['upload_path'] . $name . $ext, $decodedImageFile);
+
+            $this->db->set('name', $name);
+            $this->db->set('ext', $ext);
+            $this->db->where('id', $imageId);
+            $this->db->update('image');
+          }
+
           $activity = $this->db->select('activity_code, qty, fk_speciality, fk_speciality_role')->from('activity')->where('id', $activityId)->get()->row();
 
           $this->db->set('activity_code', $activity->activity_code);
@@ -699,11 +729,12 @@ class App extends CI_Controller
           $this->db->set('p_avance', round($avance / $activity->qty * 100, 2));
           $this->db->set('fk_speciality', $activity->fk_speciality);
           $this->db->set('fk_speciality_role', $activity->fk_speciality_role);
-          $this->db->set('fk_image', 0);
+          $this->db->set('fk_image', $imageId);
           $this->db->set('workers', 0);
           $this->db->set('fk_activity', $activityId);
           $this->db->set('fk_building_site', $buildingSiteId);
           $this->db->insert('activity_registry');
+          
         }
 
         echo json_encode(
