@@ -844,7 +844,7 @@ class Building_sites extends CI_Controller
 									array(
 										'fk_building_site' => $building_site_id,
 										'fk_area' => $aid,
-										'name' => $registro->zona
+										'name' => trim($registro->zona)
 									)
 								)
 							);
