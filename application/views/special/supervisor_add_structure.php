@@ -21,7 +21,7 @@
 			</header>
 
 			<?php
-				$this->load->view( SPATH . 'supervisor_add_content',  array( 'data' => $data, 'roles' => $roles, 'error' => $error ) );
+				$this->load->view( SPATH . 'supervisor_add_content',  array( 'data' => $data, 'error' => $error ) );
 			?>
 		
 			<?php 
