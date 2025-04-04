@@ -36,7 +36,9 @@
                                         foreach ($data as $entry):
                                             $x++;
                                             ?>
-                                    <tr>
+                                    <tr
+                                        style="<?= $entry->checked != null ? 'background-color: #3D8; color: #333;' : '' ?>"
+                                    >
                                         <th><?= $entry->activity->activity_code ?></th>
                                         <td><?= $entry->activity->name ?></td>
                                         <td><?= $entry->activity->speciality->name ?></td>

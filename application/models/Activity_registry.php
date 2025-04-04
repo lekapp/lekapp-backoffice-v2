@@ -28,6 +28,7 @@ class Activity_registry extends CI_Model
 		$activity_registry->activity_date_f = $ad;
 		$activity_registry->comment = $this->input->post('comment');
 		$activity_registry->machinery = $this->input->post('machinery');
+		$activity_registry->checked = null;
 		//$activity_registry->hh							=	$this->input->post('hh');
 		//$activity_registry->workers						=	$this->input->post('workers');
 		//$activity_registry->p_avance					=	$this->input->post('p_avance');
@@ -59,6 +60,7 @@ class Activity_registry extends CI_Model
 		$activity_registry->hh = $hh;
 		$activity_registry->workers = 1;
 		$activity_registry->p_avance = 0;
+		$activity_registry->checked = null;
 		$this->db->insert('activity_registry', $activity_registry);
 		$result = $this->db->insert_id() > 0 ? $this->db->insert_id() : FALSE;
 		return $result;
@@ -80,6 +82,7 @@ class Activity_registry extends CI_Model
 		$activity_registry->hh = 0;
 		$activity_registry->workers = 0;
 		$activity_registry->p_avance = 0;
+		$activity_registry->checked = null;
 		$this->db->insert('activity_registry', $activity_registry);
 		$result = $this->db->insert_id() > 0 ? $this->db->insert_id() : FALSE;
 		return $result;
@@ -100,9 +103,15 @@ class Activity_registry extends CI_Model
 		$ad = strtotime($activity_registry->activity_date);
 		$activity_registry->activity_date_f = $ad / 86400;
 		$activity_registry->activity_code = $this->input->post('activity_code');
-		$this->db->update('activity_registry', $activity_registry, array(
-			'id' => $id
-		)
+		$dtz = new DateTimeZone('America/Santiago');
+		$dt = new DateTime('NOW', $dtz);
+		$activity_registry->checked = $dt->format('Y-m-d H:i:s');
+		$this->db->update(
+			'activity_registry',
+			$activity_registry,
+			array(
+				'id' => $id
+			)
 		);
 	}
 
@@ -111,28 +120,38 @@ class Activity_registry extends CI_Model
 
 		$avance = $this->input->post('avance');
 
-		$currentActivityRegistry = $this->db->get_where('activity_registry', array(
-			'id' => $id
-		)
+		$currentActivityRegistry = $this->db->get_where(
+			'activity_registry',
+			array(
+				'id' => $id
+			)
 		)->row();
 
 		$activity_registry = new stdClass();
 		$activity_registry->comment = $this->input->post('comment');
 		$activity_registry->machinery = $this->input->post('machinery');
 		$activity_registry->avance = $avance;
+		$dtz = new DateTimeZone('America/Santiago');
+		$dt = new DateTime('NOW', $dtz);
+		$activity_registry->checked = $dt->format('Y-m-d H:i:s');
 
-		$activity = $this->db->get_where('activity', array(
-			'id' => $currentActivityRegistry->fk_activity
-		)
+		$activity = $this->db->get_where(
+			'activity',
+			array(
+				'id' => $currentActivityRegistry->fk_activity
+			)
 		)->row();
 
 		$p_avance = floatval($avance) * 100 / floatval($activity->qty);
 
 		$activity_registry->p_avance = $p_avance;
 
-		$this->db->update('activity_registry', $activity_registry, array(
-			'id' => $id
-		)
+		$this->db->update(
+			'activity_registry',
+			$activity_registry,
+			array(
+				'id' => $id
+			)
 		);
 	}
 
@@ -157,9 +176,13 @@ class Activity_registry extends CI_Model
 		$activity_registry->machinery = $machinery;
 		$activity_registry->avance = $avance;
 		$activity_registry->p_avance = $p_avance;
-		$this->db->update('activity_registry', $activity_registry, array(
-			'id' => $id
-		)
+		$activity_registry->checked = null;
+		$this->db->update(
+			'activity_registry',
+			$activity_registry,
+			array(
+				'id' => $id
+			)
 		);
 	}
 
@@ -168,9 +191,12 @@ class Activity_registry extends CI_Model
 		$activity_registry = new stdClass();
 		$activity_registry->hh = $new_hh;
 		$activity_registry->workers = $workers;
-		$this->db->update('activity_registry', $activity_registry, array(
-			'id' => $id
-		)
+		$this->db->update(
+			'activity_registry',
+			$activity_registry,
+			array(
+				'id' => $id
+			)
 		);
 	}
 
@@ -178,9 +204,12 @@ class Activity_registry extends CI_Model
 	{
 		$activity_registry = new stdClass();
 		$activity_registry->fk_image = $image_id;
-		$this->db->update('activity_registry', $activity_registry, array(
-			'id' => $id
-		)
+		$this->db->update(
+			'activity_registry',
+			$activity_registry,
+			array(
+				'id' => $id
+			)
 		);
 	}
 
