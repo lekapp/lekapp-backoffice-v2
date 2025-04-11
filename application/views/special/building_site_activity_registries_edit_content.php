@@ -79,7 +79,7 @@
                         </div>
                         <div class="form-group row">
                             <label class="col-sm-4 form-control-label" for="avance">
-                                Avance (Max:
+                                Cantidad (Max:
                                 <?= $data->activity->qty ?>
                                 [<?= $data->activity->unt ?>])
                             </label>

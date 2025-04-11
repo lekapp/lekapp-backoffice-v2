@@ -2951,7 +2951,8 @@ class Building_sites extends CI_Controller
 				$activityRegistry = $this->activity_registry->obtener(
 					array(
 						array(
-							'fk_building_site' => $building_site_id
+							'fk_building_site' => $building_site_id,
+							'checked !=' => null,
 						)
 					)
 				);
@@ -3060,7 +3061,7 @@ class Building_sites extends CI_Controller
 
 				$difference = $weeklyData->selectedDayOfWeek - $weeklyData->lowestDayOfWeek;
 				$weeklyData->selectedDateMaxDayPreviousWeek = clone $weeklyData->selectedDate;
-				$weeklyData->selectedDateMaxDayPreviousWeek->modify('-' . $difference . ' day');
+				//$weeklyData->selectedDateMaxDayPreviousWeek->modify('-' . $difference . ' day');
 				$weeklyData->selectedDateMaxDayCurrentWeek = clone $weeklyData->selectedDateMaxDayPreviousWeek;
 				$weeklyData->selectedDateMaxDayCurrentWeek->modify('+' . 7 . ' day');
 				$weeklyData->selectedDateMaxDayPreviousWeek = $weeklyData->selectedDateMaxDayPreviousWeek->format('Y-m-d');
@@ -3111,6 +3112,7 @@ class Building_sites extends CI_Controller
 						->where('fk_building_site', $building_site_id)
 						->where('activity_date >=', $weeklyData->selectedDateMaxDayPreviousWeek)
 						->where('activity_date <=', $weeklyData->selectedDateMaxDayCurrentWeek)
+						->where('checked !=', null)
 						->get()->row()->total,
 					2
 				);
@@ -3158,6 +3160,7 @@ class Building_sites extends CI_Controller
 							->where('fk_building_site', $building_site_id)
 							->where('fk_speciality', $speciality->id)
 							->where('activity_date <', $weeklyData->selectedDateMaxDayPreviousWeek)
+							->where('checked !=', null)
 							->get()->row()->total,
 						2
 					);
@@ -3168,6 +3171,7 @@ class Building_sites extends CI_Controller
 							->where('fk_speciality', $speciality->id)
 							->where('activity_date >=', $weeklyData->selectedDateMaxDayPreviousWeek)
 							->where('activity_date <=', $weeklyData->selectedDateMaxDayCurrentWeek)
+							->where('checked !=', null)
 							->get()->row()->total,
 						2
 					);
@@ -3236,6 +3240,7 @@ class Building_sites extends CI_Controller
 							->where('fk_building_site', $building_site_id)
 							->where('fk_activity', $activity->aId)
 							->where('activity_date <', $weeklyData->selectedDateMaxDayPreviousWeek)
+							->where('checked !=', null)
 							->get()->row()->total,
 						2
 					);
@@ -3248,6 +3253,7 @@ class Building_sites extends CI_Controller
 							->where('fk_activity', $activity->aId)
 							->where('activity_date >=', $weeklyData->selectedDateMaxDayPreviousWeek)
 							->where('activity_date <=', $weeklyData->selectedDateMaxDayCurrentWeek)
+							->where('checked !=', null)
 							->get()->row()->total,
 						2
 					);
@@ -3264,6 +3270,7 @@ class Building_sites extends CI_Controller
 						->where('fk_building_site', $building_site_id)
 						->where('fk_activity', $activity->aId)
 						->where('activity_date <', $weeklyData->selectedDateMaxDayPreviousWeek)
+						->where('checked !=', null)
 						->order_by('activity_date', 'DESC')
 						->limit(1)
 						->get()->row();
@@ -3284,6 +3291,7 @@ class Building_sites extends CI_Controller
 						->where('fk_activity', $activity->aId)
 						->where('activity_date >=', $weeklyData->selectedDateMaxDayPreviousWeek)
 						->where('activity_date <=', $weeklyData->selectedDateMaxDayCurrentWeek)
+						->where('checked !=', null)
 						->order_by('activity_date', 'DESC')
 						->limit(1)
 						->get()->row();
@@ -3512,6 +3520,7 @@ class Building_sites extends CI_Controller
 				)
 			)
 		);
+		
 		$add_lib = array(
 			'js_lib' => array(
 				//asset_js( '../node_modules/datatables/datatables.min.js' ),
@@ -3553,6 +3562,7 @@ class Building_sites extends CI_Controller
 				)
 			)
 		);
+		d($data);
 		$add_lib = array(
 			'js_lib' => array(
 				//asset_js( '../node_modules/datatables/datatables.min.js' ),
