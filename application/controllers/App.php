@@ -558,9 +558,10 @@ class App extends CI_Controller
         }
 
         $overseeIn = $this->db
-          ->select('fk_speciality, fk_building_site')
+          ->select('fk_speciality, fk_building_site, first_name as name')
           ->from('supervisor')
           ->join('speciality', 'speciality.id = supervisor.fk_speciality')
+          ->join('user', 'user.id = supervisor.fk_user')
           ->where('fk_user', $user->id)
           ->get()->result();
 
