@@ -1,13 +1,13 @@
 <style type="text/css">
-.print-utility {
-    page-break-after: always;
-    /* page-break-before: always; */
-    page-break-inside: avoid;
-}
+    .print-utility {
+        page-break-after: always;
+        /* page-break-before: always; */
+        page-break-inside: avoid;
+    }
 
-#printable {
-    font-size: small;
-}
+    #printable {
+        font-size: small;
+    }
 </style>
 
 <?php
@@ -90,9 +90,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                     <?php
                                     $dt = new DateTime($data->activity_date, new DateTimeZone('America/Santiago'));
                                     echo $dt->format('d-m-Y');
-                                    echo "/";
-                                    echo $data->report_no ?> (Semana
-                                    <?php echo $weekNumber ?>)
+                                    ?>
                                 </h3>
                             </td>
                             <td></td>
@@ -269,89 +267,138 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                     </thead>
                     <tbody>
                         <?php
+                        $aAn1 = 0;
+                        $aAn2 = 0;
+                        $aAn3 = 0;
+                        $aAn4 = 0;
+                        $aAn5 = 0;
+                        $a1 = 0;
+                        $a2 = 0;
+                        $a3 = 0;
+                        $a4 = 0;
+                        $a5 = 0;
+                        $aAc1 = 0;
+                        $aAc2 = 0;
+                        $aAc3 = 0;
+                        $aAc4 = 0;
+                        $aAc5 = 0;
+                        ?>
+                        <?php
                         foreach ($json_data->activities as $activity):
                             ?>
-                        <tr>
-                            <td>
-                                <?= $activity->zName ?>
-                            </td>
-                            <td>
-                                <?= $activity->arName ?>
-                            </td>
-                            <td>
-                                <?= $activity->code ?>
-                            </td>
-                            <td>
-                                <?= $activity->aName ?>
-                            </td>
-                            <td>
-                                <?= $activity->unt ?>
-                            </td>
-                            <td>
-                                <?= $activity->qty ?>
-                            </td>
-                            <td>
-                                <?= $activity->eff ?>
-                            </td>
-                            <td>
-                                <?=
+                            <tr>
+                                <td>
+                                    <?= $activity->zName ?>
+                                </td>
+                                <td>
+                                    <?= $activity->arName ?>
+                                </td>
+                                <td>
+                                    <?= $activity->code ?>
+                                </td>
+                                <td>
+                                    <?= $activity->aName ?>
+                                </td>
+                                <td>
+                                    <?= $activity->unt ?>
+                                </td>
+                                <td>
+                                    <?= $activity->qty ?>
+                                </td>
+                                <td>
+                                    <?= $activity->eff ?>
+                                </td>
+                                <td>
+                                    <?=
                                         $activity->activityProjectProgrammedWorkHours
-                                        //hh
                                         ?>
-                            </td>
+                                </td>
 
-                            <td>
-                                <?= $activity->activityTotalQuantityBeforeCurrentWeek ?>
-                            </td>
-                            <td>
-                                <?= $activity->activityTotalSavedHHBeforeCurrentWeek ?>
-                            </td>
-                            <td>
-                                <?= $activity->activityTotalRealAdvanceBeforeCurrentWeek ?>
-                            </td>
-                            <td>
-                                <?= $activity->activityTotalRealWorkHoursBeforeCurrentWeek ?>
-                            </td>
-                            <td>
-                                <?= $activity->activityTotalPFBeforeCurrentWeek ?>
-                            </td>
 
-                            <td>
-                                <?= $activity->activityTotalQuantityInCurrentWeek ?>
-                            </td>
-                            <td>
-                                <?= /* $activity->activityTotalSavedHHInCurrentWeek */ round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2) ?>
-                            </td>
-                            <td>
-                                <?= $activity->activityTotalRealAdvanceInCurrentWeek ?>
-                            </td>
-                            <td>
-                                <?= $activity->activityTotalRealWorkHoursInCurrentWeek ?>
-                            </td>
-                            <td>
-                                <?= $activity->activityTotalPFInCurrentWeek ?>
-                            </td>
 
-                            <td>
-                                <?= $activity->activityTotalQuantityBeforeCurrentWeek + $activity->activityTotalQuantityInCurrentWeek ?>
-                            </td>
-                            <td>
-                                <?=
-                                        /*$activity->activityTotalSavedHHBeforeCurrentWeek + $activity->activityTotalSavedHHInCurrentWeek*/
-                                        round($activity->activityProjectProgrammedWorkHours * ($activity->activityTotalRealAdvanceBeforeCurrentWeek + $activity->activityTotalRealAdvanceInCurrentWeek) / 100, 2)
-                                        ?>
-                            </td>
-                            <td>
-                                <?= $activity->activityTotalRealAdvanceBeforeCurrentWeek + $activity->activityTotalRealAdvanceInCurrentWeek ?>
-                            </td>
-                            <td>
-                                <?= $activity->activityTotalRealWorkHoursBeforeCurrentWeek + $activity->activityTotalRealWorkHoursInCurrentWeek ?>
-                            </td>
-                            <td>
-                                <?= $activity->activityTotalPFBeforeCurrentWeek + $activity->activityTotalPFInCurrentWeek ?>
-                            </td>
-                        </tr>
-                        <?php
+                                <td>
+                                    <?php
+                                    echo $activity->activityTotalQuantityBeforeCurrentWeek;
+                                    $aAn1 += $activity->activityTotalQuantityBeforeCurrentWeek;
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    echo round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2);
+                                    $aAn2 += round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2);
+                                    ?>
+
+                                </td>
+                                <td>
+                                    <?php 
+                                        echo $activity->activityTotalQuantityBeforeCurrentWeek / $activity->qty * 100;
+                                        $aAn3 += $activity->activityTotalRealAdvanceBeforeCurrentWeek;
+                                    ?>
+                                </td>
+                                <td>
+                                    <?= $activity->activityTotalRealWorkHoursBeforeCurrentWeek ?>
+                                </td>
+                                <td>
+                                    <?= $activity->activityTotalPFBeforeCurrentWeek ?>
+                                </td>
+
+
+
+                                <td>
+                                    <?php
+                                    echo $activity->activityTotalQuantityInCurrentWeek;
+                                    $a1 += $activity->activityTotalQuantityInCurrentWeek;
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    echo round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2);
+                                    $a2 += round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2);
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    echo ($activity->activityTotalQuantityInCurrentWeek / $activity->qty * 100);
+                                    $a3 += $activity->activityTotalRealAdvanceInCurrentWeek;
+                                    ?>
+                                </td>
+                                <td>
+                                    <?= $activity->activityTotalRealWorkHoursInCurrentWeek ?>
+                                </td>
+                                <td>
+                                    <?= $activity->activityTotalPFInCurrentWeek ?>
+                                </td>
+
+
+
+                                <td>
+                                    <?php
+                                    echo $activity->activityTotalQuantityBeforeCurrentWeek + $activity->activityTotalQuantityInCurrentWeek;
+                                    $aAc1 += $activity->activityTotalQuantityBeforeCurrentWeek + $activity->activityTotalQuantityInCurrentWeek;
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    echo round($activity->activityProjectProgrammedWorkHours * ($activity->activityTotalRealAdvanceBeforeCurrentWeek + $activity->activityTotalRealAdvanceInCurrentWeek) / 100, 2);
+                                    $aAc2 += round($activity->activityProjectProgrammedWorkHours * ($activity->activityTotalRealAdvanceBeforeCurrentWeek + $activity->activityTotalRealAdvanceInCurrentWeek) / 100, 2);
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php 
+                                        echo ($activity->activityTotalQuantityBeforeCurrentWeek + $activity->activityTotalQuantityInCurrentWeek) / $activity->qty * 100;
+                                        $aAc3 += $activity->activityTotalRealAdvanceBeforeCurrentWeek + $activity->activityTotalRealAdvanceInCurrentWeek;
+                                    ?>
+                                </td>
+                                <td>
+                                    <?= $activity->activityTotalRealWorkHoursBeforeCurrentWeek + $activity->activityTotalRealWorkHoursInCurrentWeek ?>
+                                </td>
+                                <td>
+                                    <?= $activity->activityTotalPFBeforeCurrentWeek + $activity->activityTotalPFInCurrentWeek ?>
+                                </td>
+
+
+                            </tr>
+                            <?php
                         endforeach;
                         ?>
                         <tr>
@@ -365,19 +412,22 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                     <?= $json_data->activitiesResume->activityProjectProgrammedWorkHours ?>
                                 </strong>
                             </td>
+
+
+
                             <td>
                                 <strong>
-                                    <?= $json_data->activitiesResume->activityProjectQuantityBeforeCurrentWeek ?>
+                                    <?php echo $aAn1 ?>
                                 </strong>
                             </td>
                             <td>
                                 <strong>
-                                    <?= $json_data->activitiesResume->activityProjectSavedHHBeforeCurrentWeek ?>
+                                    <?php echo $aAn2 ?>
                                 </strong>
                             </td>
                             <td>
                                 <strong>
-                                    <?= $json_data->activitiesResume->activityProjectTotalQuantity > 0 ? round($json_data->activitiesResume->activityProjectQuantityBeforeCurrentWeek / $json_data->activitiesResume->activityProjectTotalQuantity, 2) : 0 ?>
+                                    <?php echo round($aAn2 / $json_data->activitiesResume->activityProjectProgrammedWorkHours, 2) ?>
                                 </strong>
                             </td>
                             <td>
@@ -390,19 +440,22 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                     <?= $json_data->activitiesResume->activityPFBeforeCurrentWeek ?>
                                 </strong>
                             </td>
+
+
+
                             <td>
                                 <strong>
-                                    <?= $json_data->activitiesResume->activityProjectQuantityInCurrentWeek ?>
+                                    <?php echo $a1 ?>
                                 </strong>
                             </td>
                             <td>
                                 <strong>
-                                    <?= $json_data->activitiesResume->activityProjectSavedHHInCurrentWeek ?>
+                                    <?php echo $a2 ?>
                                 </strong>
                             </td>
                             <td>
                                 <strong>
-                                    <?= $json_data->activitiesResume->activityProjectTotalQuantity > 0 ? round($json_data->activitiesResume->activityProjectQuantityInCurrentWeek / $json_data->activitiesResume->activityProjectTotalQuantity, 2) : 0 ?>
+                                    <?php echo round($a2 / $json_data->activitiesResume->activityProjectProgrammedWorkHours, 2) ?>
                                 </strong>
                             </td>
                             <td>
@@ -415,19 +468,22 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                     <?= $json_data->activitiesResume->activityPFInCurrentWeek ?>
                                 </strong>
                             </td>
+
+
+
                             <td>
                                 <strong>
-                                    <?= $json_data->activitiesResume->activityProjectQuantity ?>
+                                    <?php echo $aAc1 ?>
                                 </strong>
                             </td>
                             <td>
                                 <strong>
-                                    <?= $json_data->activitiesResume->activityProjectSavedHH ?>
+                                    <?php echo $aAc2 ?>
                                 </strong>
                             </td>
                             <td>
                                 <strong>
-                                    <?= $json_data->activitiesResume->activityProjectTotalQuantity > 0 ? round($json_data->activitiesResume->activityProjectQuantity / $json_data->activitiesResume->activityProjectTotalQuantity, 2) : 0 ?>
+                                    <?php echo round($aAc2 / $json_data->activitiesResume->activityProjectProgrammedWorkHours, 2) ?>
                                 </strong>
                             </td>
                             <td>

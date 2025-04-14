@@ -1,13 +1,13 @@
 <style type="text/css">
-.print-utility {
-    page-break-after: always;
-    /* page-break-before: always; */
-    page-break-inside: avoid;
-}
+    .print-utility {
+        page-break-after: always;
+        /* page-break-before: always; */
+        page-break-inside: avoid;
+    }
 
-#printable {
-    font-size: small;
-}
+    #printable {
+        font-size: small;
+    }
 </style>
 
 <?php
@@ -89,9 +89,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                     <?php
                                     $dt = new DateTime($data->activity_date, new DateTimeZone('America/Santiago'));
                                     echo $dt->format('d-m-Y');
-                                    echo "/";
-                                    echo $data->report_no ?> (Semana
-                                    <?php echo $weekNumber ?>)
+                                    ?>
                                 </h3>
                             </td>
                             <td></td>
@@ -195,21 +193,21 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                     }
                     foreach ($json_data->milestones as $milestone):
                         ?>
-                    <tr>
-                        <td>
-                            <?= $milestone->name ?>
-                        </td>
-                        <td>
-                            <?= $milestone->type ?>
-                        </td>
-                        <td>
-                            <?php
+                        <tr>
+                            <td>
+                                <?= $milestone->name ?>
+                            </td>
+                            <td>
+                                <?= $milestone->type ?>
+                            </td>
+                            <td>
+                                <?php
                                 $dt = new DateTime($milestone->date, $dtz);
                                 echo $dt->format('d-m-Y');
                                 ?>
-                        </td>
-                    </tr>
-                    <?php
+                            </td>
+                        </tr>
+                        <?php
                     endforeach;
                     ?>
                 </tbody>
@@ -399,157 +397,157 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
         foreach ($json_data->specialities as $speciality):
             ?>
 
-        <hr>
+            <hr>
 
-        <div class="row">
+            <div class="row">
 
-            <div class="col-md-12 text-center">
-                <h1>
-                    <?= $speciality->name ?>
-                </h1>
-                <p>
-                    <strong>HH Total</strong>
-                    <span>
-                        <?= $speciality->specialityTotalProgrammedWorkHoursMax ?>
-                    </span>
-                </p>
-            </div>
-            <div class="col-md-4 text-center px-4">
-                <h3>
-                    <strong>
-                        Acumulado anterior
-                    </strong>
-                </h3>
-                <table class="col-md-12 table table-bordered ">
-                    <thead>
-                        <th>
-                            <strong>
-                                Programado
-                            </strong>
-                        </th>
-                        <th>
-                            <strong>
-                                Real
-                            </strong>
-                        </th>
-                        <th>
-                            <strong>
-                                Variación
-                            </strong>
-                        </th>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <?php
+                <div class="col-md-12 text-center">
+                    <h1>
+                        <?= $speciality->name ?>
+                    </h1>
+                    <p>
+                        <strong>HH Total</strong>
+                        <span>
+                            <?= $speciality->specialityTotalProgrammedWorkHoursMax ?>
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-4 text-center px-4">
+                    <h3>
+                        <strong>
+                            Acumulado anterior
+                        </strong>
+                    </h3>
+                    <table class="col-md-12 table table-bordered ">
+                        <thead>
+                            <th>
+                                <strong>
+                                    Programado
+                                </strong>
+                            </th>
+                            <th>
+                                <strong>
+                                    Real
+                                </strong>
+                            </th>
+                            <th>
+                                <strong>
+                                    Variación
+                                </strong>
+                            </th>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <?php
                                 $aa = $speciality->specialityTotalProgrammedWorkHoursMax > 0 ? round(100 * $speciality->specialityTotalProgrammedWorkHoursBeforeCurrentWeek / $speciality->specialityTotalProgrammedWorkHoursMax, 2) : 0;
                                 $ab = $speciality->specialityTotalRealWorkHours > 0 ? round(100 * $speciality->specialityTotalRealWorkHoursBeforeCurrentWeek / $speciality->specialityTotalRealWorkHours, 2) : 0;
                                 $ac = round($ab - $aa, 2);
                                 ?>
-                            <td>
-                                <?= $aa ?>%
-                            </td>
-                            <td>
-                                <?= $ab ?>%
-                            </td>
-                            <td>
-                                <?= $ac ?>%
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="col-md-4 text-center px-4">
-                <h3>
-                    <strong>
-                        Actual
-                    </strong>
-                </h3>
-                <table class="col-md-12 table table-bordered ">
-                    <thead>
-                        <th>
-                            <strong>
-                                Programado
-                            </strong>
-                        </th>
-                        <th>
-                            <strong>
-                                Real
-                            </strong>
-                        </th>
-                        <th>
-                            <strong>
-                                Variación
-                            </strong>
-                        </th>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <?php
+                                <td>
+                                    <?= $aa ?>%
+                                </td>
+                                <td>
+                                    <?= $ab ?>%
+                                </td>
+                                <td>
+                                    <?= $ac ?>%
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-4 text-center px-4">
+                    <h3>
+                        <strong>
+                            Actual
+                        </strong>
+                    </h3>
+                    <table class="col-md-12 table table-bordered ">
+                        <thead>
+                            <th>
+                                <strong>
+                                    Programado
+                                </strong>
+                            </th>
+                            <th>
+                                <strong>
+                                    Real
+                                </strong>
+                            </th>
+                            <th>
+                                <strong>
+                                    Variación
+                                </strong>
+                            </th>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <?php
                                 $ba = $speciality->specialityTotalProgrammedWorkHoursMax > 0 ? round(100 * $speciality->specialityTotalProgrammedWorkHoursInCurrentWeek / $speciality->specialityTotalProgrammedWorkHoursMax, 2) : 0;
                                 $bb = $speciality->specialityTotalRealWorkHours > 0 ? round(100 * $speciality->specialityTotalRealWorkHoursInCurrentWeek / $speciality->specialityTotalRealWorkHours, 2) : 0;
                                 $bc = round($bb - $ba, 2);
                                 ?>
-                            <td>
-                                <?= $ba ?>%
-                            </td>
-                            <td>
-                                <?= $bb ?>%
-                            </td>
-                            <td>
-                                <?= $bc ?>%
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="col-md-4 text-center px-4">
-                <h3>
-                    <strong>
-                        Acumulado actual
-                    </strong>
-                </h3>
-                <table class="col-md-12 table table-bordered ">
-                    <thead>
-                        <th>
-                            <strong>
-                                Programado
-                            </strong>
-                        </th>
-                        <th>
-                            <strong>
-                                Real
-                            </strong>
-                        </th>
-                        <th>
-                            <strong>
-                                Variación
-                            </strong>
-                        </th>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <?php
+                                <td>
+                                    <?= $ba ?>%
+                                </td>
+                                <td>
+                                    <?= $bb ?>%
+                                </td>
+                                <td>
+                                    <?= $bc ?>%
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-4 text-center px-4">
+                    <h3>
+                        <strong>
+                            Acumulado actual
+                        </strong>
+                    </h3>
+                    <table class="col-md-12 table table-bordered ">
+                        <thead>
+                            <th>
+                                <strong>
+                                    Programado
+                                </strong>
+                            </th>
+                            <th>
+                                <strong>
+                                    Real
+                                </strong>
+                            </th>
+                            <th>
+                                <strong>
+                                    Variación
+                                </strong>
+                            </th>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <?php
                                 $ca = $aa + $ba;
                                 $cb = $ab + $bb;
                                 $cc = round($cb - $ca, 2);
                                 ?>
-                            <td>
-                                <?= $ca ?>%
-                            </td>
-                            <td>
-                                <?= $cb ?>%
-                            </td>
-                            <td>
-                                <?= $cc ?>%
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                <td>
+                                    <?= $ca ?>%
+                                </td>
+                                <td>
+                                    <?= $cb ?>%
+                                </td>
+                                <td>
+                                    <?= $cc ?>%
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
 
-        </div>
-
-        <?php
+            <?php
         endforeach;
         ?>
 
@@ -558,13 +556,13 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
 </section>
 
 <style>
-.table-bordered td,
-.table-bordered th {
-    border: 1px solid #818487;
-}
+    .table-bordered td,
+    .table-bordered th {
+        border: 1px solid #818487;
+    }
 
-.table thead th {
-    vertical-align: bottom;
-    border-bottom: 2px solid #818487;
-}
+    .table thead th {
+        vertical-align: bottom;
+        border-bottom: 2px solid #818487;
+    }
 </style>
