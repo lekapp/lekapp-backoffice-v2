@@ -39,11 +39,11 @@
                         </div>
 
                         <div class="form-group row">
-                            <label class="col-sm-2 form-control-label">Campo 1</label>
+                            <label class="col-sm-2 form-control-label">Administración</label>
                             <div class="col-sm-4">
                                 <?php
                                 $attr = array(
-                                    'placeholder' => 'Campo 1',
+                                    'placeholder' => 'Administración',
                                     'class' => 'form-control',
                                     'name' => 'campo1',
                                     'value' => set_value('text')
@@ -52,11 +52,11 @@
                                 echo form_error('text');
                                 ?>
                             </div>
-                            <label class="col-sm-2 form-control-label">Campo 2</label>
+                            <label class="col-sm-2 form-control-label">Oficina Técnica</label>
                             <div class="col-sm-4">
                                 <?php
                                 $attr = array(
-                                    'placeholder' => 'Campo 2',
+                                    'placeholder' => 'Oficina Técnica',
                                     'class' => 'form-control',
                                     'name' => 'campo2',
                                     'value' => set_value('text')
@@ -68,11 +68,11 @@
                         </div>
 
                         <div class="form-group row">
-                            <label class="col-sm-2 form-control-label">Campo 3</label>
+                            <label class="col-sm-2 form-control-label">Prevención</label>
                             <div class="col-sm-4">
                                 <?php
                                 $attr = array(
-                                    'placeholder' => 'Campo 3',
+                                    'placeholder' => 'Prevención',
                                     'class' => 'form-control',
                                     'name' => 'campo3',
                                     'value' => set_value('text')
@@ -81,11 +81,11 @@
                                 echo form_error('text');
                                 ?>
                             </div>
-                            <label class="col-sm-2 form-control-label">Campo 4</label>
+                            <label class="col-sm-2 form-control-label">Calidad</label>
                             <div class="col-sm-4">
                                 <?php
                                 $attr = array(
-                                    'placeholder' => 'Campo 4',
+                                    'placeholder' => 'Calidad',
                                     'class' => 'form-control',
                                     'name' => 'campo4',
                                     'value' => set_value('text')

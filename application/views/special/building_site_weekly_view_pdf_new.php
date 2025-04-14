@@ -225,19 +225,19 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
 
                 <tbody>
                     <?php if ($data->field1 != NULL && $data->field1 != "") {
-                        echo "<tr><td width='20%'>Campo 1</td><td>" . $data->field1 . "</td></tr>";
+                        echo "<tr><td width='20%'>Administración</td><td>" . $data->field1 . "</td></tr>";
                     }
 
                     if ($data->field2 != NULL && $data->field2 != "") {
-                        echo "<tr><td width='20%'>Campo 2</td><td>" . $data->field2 . "</td></tr>";
+                        echo "<tr><td width='20%'>Oficina Técnica</td><td>" . $data->field2 . "</td></tr>";
                     }
 
                     if ($data->field3 != NULL && $data->field3 != "") {
-                        echo "<tr><td width='20%'>Campo 3</td><td>" . $data->field3 . "</td></tr>";
+                        echo "<tr><td width='20%'>Prevención</td><td>" . $data->field3 . "</td></tr>";
                     }
 
                     if ($data->field4 != NULL && $data->field4 != "") {
-                        echo "<tr><td width='20%'>Campo 4</td><td>" . $data->field4 . "</td></tr>";
+                        echo "<tr><td width='20%'>Calidad</td><td>" . $data->field4 . "</td></tr>";
                     }
 
                     ?>
