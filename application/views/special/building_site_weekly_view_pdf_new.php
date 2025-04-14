@@ -330,7 +330,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                         <tr>
                             <?php
                             $ba = $json_data->projectTotalProgrammedWorkHoursMax > 0 ? round(100 * $json_data->projectTotalProgrammedWorkHoursInCurrentWeek / $json_data->projectTotalProgrammedWorkHoursMax, 2) : 0;
-                            $bb = $json_data->projectTotalRealWorkHours > 0 ? round(100 * $json_data->projectTotalRealWorkHoursInCurrentWeek / $json_data->projectTotalRealWorkHours, 2) : 0;
+                            $bb = round($json_data->projectTotalRealWorkHoursInCurrentWeek, 2);
                             $bc = round($bb - $ba, 2);
                             ?>
                             <td>
@@ -440,7 +440,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                             <tr>
                                 <?php
                                 $aa = $speciality->specialityTotalProgrammedWorkHoursMax > 0 ? round(100 * $speciality->specialityTotalProgrammedWorkHoursBeforeCurrentWeek / $speciality->specialityTotalProgrammedWorkHoursMax, 2) : 0;
-                                $ab = $speciality->specialityTotalRealWorkHours > 0 ? round(100 * $speciality->specialityTotalRealWorkHoursBeforeCurrentWeek / $speciality->specialityTotalRealWorkHours, 2) : 0;
+                                $ab = round($speciality->specialityTotalRealWorkHoursBeforeCurrentWeek, 2);
                                 $ac = round($ab - $aa, 2);
                                 ?>
                                 <td>
@@ -484,7 +484,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                             <tr>
                                 <?php
                                 $ba = $speciality->specialityTotalProgrammedWorkHoursMax > 0 ? round(100 * $speciality->specialityTotalProgrammedWorkHoursInCurrentWeek / $speciality->specialityTotalProgrammedWorkHoursMax, 2) : 0;
-                                $bb = $speciality->specialityTotalRealWorkHours > 0 ? round(100 * $speciality->specialityTotalRealWorkHoursInCurrentWeek / $speciality->specialityTotalRealWorkHours, 2) : 0;
+                                $bb = round($speciality->specialityTotalRealWorkHoursInCurrentWeek, 2);
                                 $bc = round($bb - $ba, 2);
                                 ?>
                                 <td>

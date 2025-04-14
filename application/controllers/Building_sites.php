@@ -469,12 +469,12 @@ class Building_sites extends CI_Controller
 		);
 		$i = 2;
 		/*
-																																																						  $worker_all_movements = $this->worker_activity->obtener_ordenado(
-																																																							  [[
-																																																								  'fk_building_site'	=>	$building_site_id,
-																																																							  ]]
-																																																						  );
-																																																						  */
+																																																																				$worker_all_movements = $this->worker_activity->obtener_ordenado(
+																																																																					[[
+																																																																						'fk_building_site'	=>	$building_site_id,
+																																																																					]]
+																																																																				);
+																																																																				*/
 		foreach ($workers as $worker) {
 			$movement = [];
 			$processed = [];
@@ -3100,22 +3100,10 @@ class Building_sites extends CI_Controller
 
 				//Real Working Hours (Project Level)
 
-				$weeklyData->projectTotalRealWorkHoursBeforeCurrentWeek = round(
-					$this->db->select('SUM(hh) as total')->from('activity_registry')
-						->where('fk_building_site', $building_site_id)
-						->where('activity_date <', $weeklyData->selectedDateMaxDayPreviousWeek)
-						->get()->row()->total,
-					2
-				);
-				$weeklyData->projectTotalRealWorkHoursInCurrentWeek = round(
-					$this->db->select('SUM(hh) as total')->from('activity_registry')
-						->where('fk_building_site', $building_site_id)
-						->where('activity_date >=', $weeklyData->selectedDateMaxDayPreviousWeek)
-						->where('activity_date <=', $weeklyData->selectedDateMaxDayCurrentWeek)
-						->where('checked !=', null)
-						->get()->row()->total,
-					2
-				);
+				$weeklyData->projectTotalRealWorkHoursBeforeCurrentWeek = 0;
+
+				$weeklyData->projectTotalRealWorkHoursInCurrentWeek = 0;
+
 				$weeklyData->projectTotalRealWorkHours = round($weeklyData->projectTotalRealWorkHoursBeforeCurrentWeek + $weeklyData->projectTotalRealWorkHoursInCurrentWeek, 2);
 
 				foreach ($specialities as $k => $speciality) {
@@ -3155,33 +3143,16 @@ class Building_sites extends CI_Controller
 
 					//Real Working Hours (Speciality Level)
 
-					$speciality->specialityTotalRealWorkHoursBeforeCurrentWeek = round(
-						$this->db->select('SUM(hh) as total')->from('activity_registry')
-							->where('fk_building_site', $building_site_id)
-							->where('fk_speciality', $speciality->id)
-							->where('activity_date <', $weeklyData->selectedDateMaxDayPreviousWeek)
-							->where('checked !=', null)
-							->get()->row()->total,
-						2
-					);
+					$speciality->specialityTotalRealWorkHoursBeforeCurrentWeek = 0;
 
-					$speciality->specialityTotalRealWorkHoursInCurrentWeek = round(
-						$this->db->select('SUM(hh) as total')->from('activity_registry')
-							->where('fk_building_site', $building_site_id)
-							->where('fk_speciality', $speciality->id)
-							->where('activity_date >=', $weeklyData->selectedDateMaxDayPreviousWeek)
-							->where('activity_date <=', $weeklyData->selectedDateMaxDayCurrentWeek)
-							->where('checked !=', null)
-							->get()->row()->total,
-						2
-					);
+					$speciality->specialityTotalRealWorkHoursInCurrentWeek = 0;
 
 					$speciality->specialityTotalRealWorkHours = round($speciality->specialityTotalRealWorkHoursBeforeCurrentWeek + $speciality->specialityTotalRealWorkHoursInCurrentWeek, 2);
 
 					$specialities[$k] = $speciality;
 				}
 
-				$activities = $this->db->select('activity.id as aId, activity.activity_code as code, activity.unt as unt, activity.qty as qty, activity.eff as eff, activity.name as aName, zone.name as zName, area.name as arName')
+				$activities = $this->db->select('activity.id as aId, activity.activity_code as code, activity.unt as unt, activity.qty as qty, activity.eff as eff, activity.name as aName, zone.name as zName, area.name as arName, fk_speciality')
 					->from('activity')
 					->join('zone', 'zone.id = activity.fk_zone')
 					->join('area', 'area.id = zone.fk_area')
@@ -3400,6 +3371,30 @@ class Building_sites extends CI_Controller
 					$weeklyData->activitiesResume->activityPF = 0;
 				}
 
+				$aAn2 = 0;
+				$a2 = 0;
+				foreach ($activities as $activity) {
+					$aAn2 += round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2);
+					$a2 += round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2);
+				}
+
+				$weeklyData->projectTotalRealWorkHoursBeforeCurrentWeek = $aAn2 / $weeklyData->activitiesResume->activityProjectProgrammedWorkHours;
+
+				$weeklyData->projectTotalRealWorkHoursInCurrentWeek = $a2 / $weeklyData->activitiesResume->activityProjectProgrammedWorkHours;
+
+				foreach($specialities as $key => $speciality) {
+					$aAn2 = 0;
+					$a2 = 0;
+					foreach($activities as $activity) {
+						if($activity->fk_speciality == $speciality->id) {
+							$aAn2 += round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2);
+							$a2 += round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2);
+						}
+					}
+					$speciality->specialityTotalRealWorkHoursBeforeCurrentWeek = $aAn2 / $weeklyData->activitiesResume->activityProjectProgrammedWorkHours;
+					$speciality->specialityTotalRealWorkHoursInCurrentWeek = $a2 / $weeklyData->activitiesResume->activityProjectProgrammedWorkHours;
+				}
+
 				$weeklyData->activities = $activities;
 				$weeklyData->specialities = $specialities;
 				$weeklyData->reportNumber = sizeof($weeklyReport) + 1;
@@ -3487,10 +3482,10 @@ class Building_sites extends CI_Controller
 		$this->load->view(SPATH . 'building_site_weekly_view_pdf_v2', array('user' => $user[0], 'data' => $data[0]));
 		$this->load->view(CPATH . 'foot');
 		/*
-																																																						  $this->load->library('pdfgenerator');
-																																																						  $filename = 'reporte-diario-' . $daily_report_id;
-																																																						  $this->pdfgenerator->generate($html, $filename, true, 'A3', 'landscape');
-																																																						  */
+																																																																				$this->load->library('pdfgenerator');
+																																																																				$filename = 'reporte-diario-' . $daily_report_id;
+																																																																				$this->pdfgenerator->generate($html, $filename, true, 'A3', 'landscape');
+																																																																				*/
 	}
 
 	public function weekly_view_pdf_new($weekly_report_id = 0)
@@ -3520,7 +3515,8 @@ class Building_sites extends CI_Controller
 				)
 			)
 		);
-		
+		d($data);
+
 		$add_lib = array(
 			'js_lib' => array(
 				//asset_js( '../node_modules/datatables/datatables.min.js' ),
@@ -3562,7 +3558,7 @@ class Building_sites extends CI_Controller
 				)
 			)
 		);
-		d($data);
+
 		$add_lib = array(
 			'js_lib' => array(
 				//asset_js( '../node_modules/datatables/datatables.min.js' ),
@@ -5307,30 +5303,30 @@ class Building_sites extends CI_Controller
 				 */
 
 				/*
-																																																																																																													$key_cero = 0;
-																																																																																																													foreach ($p_avance as $key_value => $value) {
-																																																																																																														$i = 0;
-																																																																																																														$sum = 0;
-																																																																																																														$nr = [];
-																																																																																																														foreach ($value as $v) {
-																																																																																																															if (is_string($v) && 0 <> (float)$v)
-																																																																																																																$key_cero = $key_value;
-																																																																																																															$nr[] = $v;
-																																																																																																															$i++;
-																																																																																																														}
-																																																																																																														$sh[] = $nr;
-																																																																																																													}
-																																																																																																													$sh = $sh[$key_cero];
-																																																																																																													$spreadsheet->getActiveSheet()
-																																																																																																														->fromArray(
-																																																																																																															$sh,
-																																																																																																															0,
-																																																																																																															$C . $row,
-																																																																																																															TRUE,
-																																																																																																															TRUE
-																																																																																																														);
+																																																																																																																																								$key_cero = 0;
+																																																																																																																																								foreach ($p_avance as $key_value => $value) {
+																																																																																																																																									$i = 0;
+																																																																																																																																									$sum = 0;
+																																																																																																																																									$nr = [];
+																																																																																																																																									foreach ($value as $v) {
+																																																																																																																																										if (is_string($v) && 0 <> (float)$v)
+																																																																																																																																											$key_cero = $key_value;
+																																																																																																																																										$nr[] = $v;
+																																																																																																																																										$i++;
+																																																																																																																																									}
+																																																																																																																																									$sh[] = $nr;
+																																																																																																																																								}
+																																																																																																																																								$sh = $sh[$key_cero];
+																																																																																																																																								$spreadsheet->getActiveSheet()
+																																																																																																																																									->fromArray(
+																																																																																																																																										$sh,
+																																																																																																																																										0,
+																																																																																																																																										$C . $row,
+																																																																																																																																										TRUE,
+																																																																																																																																										TRUE
+																																																																																																																																									);
 
-																																																																																																													*/
+																																																																																																																																								*/
 
 
 				$sh_machinery = [];
@@ -5354,26 +5350,26 @@ class Building_sites extends CI_Controller
 					);
 
 				/*
-																																					$sh_comment = [];
-																																					$row++;
-																																					foreach ($p_comment as $value) {
-																																						$i = 0;
-																																						$sum = 0;
-																																						$nr_comment = [];
-																																						foreach ($value as $v) {
-																																							$nr_comment[] = $v;
-																																							$i++;
-																																						}
-																																						$sh_comment[] = $nr_comment;
-																																					}
-																																					$spreadsheet->getActiveSheet()
-																																						->fromArray(
-																																							$sh_comment,
-																																							0,
-																																							$C . $row,
-																																							TRUE
-																																						);
-																																					*/
+																																																																$sh_comment = [];
+																																																																$row++;
+																																																																foreach ($p_comment as $value) {
+																																																																	$i = 0;
+																																																																	$sum = 0;
+																																																																	$nr_comment = [];
+																																																																	foreach ($value as $v) {
+																																																																		$nr_comment[] = $v;
+																																																																		$i++;
+																																																																	}
+																																																																	$sh_comment[] = $nr_comment;
+																																																																}
+																																																																$spreadsheet->getActiveSheet()
+																																																																	->fromArray(
+																																																																		$sh_comment,
+																																																																		0,
+																																																																		$C . $row,
+																																																																		TRUE
+																																																																	);
+																																																																*/
 				$row += $roles;
 			}
 		}
@@ -5613,52 +5609,52 @@ class Building_sites extends CI_Controller
 				 */
 
 				/*
-																																																																																																													$key_cero = 0;
-																																																																																																													foreach ($p_avance as $key_value => $value) {
-																																																																																																														$i = 0;
-																																																																																																														$sum = 0;
-																																																																																																														$nr = [];
-																																																																																																														foreach ($value as $v) {
-																																																																																																															if (is_string($v) && 0 <> (float)$v)
-																																																																																																																$key_cero = $key_value;
-																																																																																																															$nr[] = $v;
-																																																																																																															$i++;
-																																																																																																														}
-																																																																																																														$sh[] = $nr;
-																																																																																																													}
-																																																																																																													$sh = $sh[$key_cero];
-																																																																																																													$spreadsheet->getActiveSheet()
-																																																																																																														->fromArray(
-																																																																																																															$sh,
-																																																																																																															0,
-																																																																																																															$C . $row,
-																																																																																																															TRUE,
-																																																																																																															TRUE
-																																																																																																														);
+																																																																																																																																								$key_cero = 0;
+																																																																																																																																								foreach ($p_avance as $key_value => $value) {
+																																																																																																																																									$i = 0;
+																																																																																																																																									$sum = 0;
+																																																																																																																																									$nr = [];
+																																																																																																																																									foreach ($value as $v) {
+																																																																																																																																										if (is_string($v) && 0 <> (float)$v)
+																																																																																																																																											$key_cero = $key_value;
+																																																																																																																																										$nr[] = $v;
+																																																																																																																																										$i++;
+																																																																																																																																									}
+																																																																																																																																									$sh[] = $nr;
+																																																																																																																																								}
+																																																																																																																																								$sh = $sh[$key_cero];
+																																																																																																																																								$spreadsheet->getActiveSheet()
+																																																																																																																																									->fromArray(
+																																																																																																																																										$sh,
+																																																																																																																																										0,
+																																																																																																																																										$C . $row,
+																																																																																																																																										TRUE,
+																																																																																																																																										TRUE
+																																																																																																																																									);
 
-																																																																																																													*/
+																																																																																																																																								*/
 
 				/*
-																																																																																																													$sh_machinery = [];
-																																																																																																													$row++;
-																																																																																																													foreach ($p_machinery as $value) {
-																																																																																																														$i = 0;
-																																																																																																														$sum = 0;
-																																																																																																														$nr_machinery = [];
-																																																																																																														foreach ($value as $v) {
-																																																																																																															$nr_machinery[] = $v;
-																																																																																																															$i++;
-																																																																																																														}
-																																																																																																														$sh_machinery[] = $nr_machinery;
-																																																																																																													}
-																																																																																																													$spreadsheet->getActiveSheet()
-																																																																																																														->fromArray(
-																																																																																																															$sh_machinery,
-																																																																																																															0,
-																																																																																																															$C . $row,
-																																																																																																															TRUE
-																																																																																																														);
-																																																																																																													*/
+																																																																																																																																								$sh_machinery = [];
+																																																																																																																																								$row++;
+																																																																																																																																								foreach ($p_machinery as $value) {
+																																																																																																																																									$i = 0;
+																																																																																																																																									$sum = 0;
+																																																																																																																																									$nr_machinery = [];
+																																																																																																																																									foreach ($value as $v) {
+																																																																																																																																										$nr_machinery[] = $v;
+																																																																																																																																										$i++;
+																																																																																																																																									}
+																																																																																																																																									$sh_machinery[] = $nr_machinery;
+																																																																																																																																								}
+																																																																																																																																								$spreadsheet->getActiveSheet()
+																																																																																																																																									->fromArray(
+																																																																																																																																										$sh_machinery,
+																																																																																																																																										0,
+																																																																																																																																										$C . $row,
+																																																																																																																																										TRUE
+																																																																																																																																									);
+																																																																																																																																								*/
 
 
 				$sh_comment = [];
