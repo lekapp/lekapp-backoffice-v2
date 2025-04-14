@@ -595,7 +595,7 @@ class App extends CI_Controller
 
       } elseif ($signinType == 'worker') {
         $user = $this->db
-          ->select('id, dni, name, email, fk_building_site, fk_speciality, fk_speciality_role')
+          ->select('id, dni, name, email, fk_building_site')
           ->from('worker')
           ->where('email', $payload['username'])
           ->where('password', pack('H*', hash('sha512', $payload['password'])))
@@ -620,8 +620,8 @@ class App extends CI_Controller
         $user->extra = [
           'signon_type' => 'worker',
           'building_site_ids' => $buildingSiteIds,
-          'speciality_ids' => $specialityIds,
-          'speciality_role_ids' => $specialityRoleIds,
+          //'speciality_ids' => $specialityIds,
+          //'speciality_role_ids' => $specialityRoleIds,
           'message' => 'Trabajador autenticado correctamente'
         ];
 
