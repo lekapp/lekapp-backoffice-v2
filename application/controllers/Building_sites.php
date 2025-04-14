@@ -4011,15 +4011,9 @@ class Building_sites extends CI_Controller
 				$data[0]->photos_data[] = $activity;
 			}
 		}
-		$data[0]->workers_in_site = [];
-
-		/*
-		$this->db->select('worker.id, worker.name, worker.email, worker.dni, worker.fk_speciality, worker.fk_speciality_role, speciality.name as speciality_name, speciality_role.name as speciality_role_name')->from('worker')
+		$data[0]->workers_in_site = $this->db->select('worker.id, worker.name, worker.email, worker.dni')->from('worker')
 			->where('worker.fk_building_site', $data[0]->fk_building_site)
-			->join('speciality', 'worker.fk_speciality = speciality.id')
-			->join('speciality_role', 'worker.fk_speciality_role = speciality_role.id')
 			->get()->result();
-		*/
 
 		$data[0]->photos = $photos;
 		$data[0]->hh_role = $spr_array;
