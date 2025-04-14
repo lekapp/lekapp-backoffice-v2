@@ -544,7 +544,7 @@ class App extends CI_Controller
 
       if ($signinType == 'overseer') {
         $user = $this->db
-          ->select('user.id, email, first_name, last_name')
+          ->select('user.id, email, first_name as name')
           ->from('user')
           ->join('role', 'role.id = user.fk_role')
           ->where('email', $payload['username'])
@@ -558,10 +558,9 @@ class App extends CI_Controller
         }
 
         $overseeIn = $this->db
-          ->select('fk_speciality, fk_building_site, first_name as name')
+          ->select('fk_speciality, fk_building_site')
           ->from('supervisor')
           ->join('speciality', 'speciality.id = supervisor.fk_speciality')
-          ->join('user', 'user.id = supervisor.fk_user')
           ->where('fk_user', $user->id)
           ->get()->result();
 
