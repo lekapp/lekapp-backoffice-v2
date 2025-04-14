@@ -3740,13 +3740,13 @@ class Building_sites extends CI_Controller
 									'worker_list' => []
 								];
 
-								$t->worker_list = $this->db->select('worker_activity.hh, worker_activity.date, worker_activity.code, worker.name, worker.email, worker.dni, worker.fk_speciality, worker.fk_speciality_role, worker.id as worker_id, speciality.name as speciality_name, speciality_role.name as speciality_role_name')->from('worker_activity')
+								$t->worker_list = $this->db->select('worker_activity.hh, worker_activity.date, worker_activity.code, worker.name, worker.email, worker.dni, worker.id as worker_id')->from('worker_activity')
 									->where('worker_activity.fk_building_site', $building_site_id)
 									->where('worker_activity.date', $activity_date)
 									->where('worker_activity.code', $a->activity->activity_code)
 									->join('worker', 'worker_activity.fk_worker = worker.id')
-									->join('speciality', 'worker.fk_speciality = speciality.id')
-									->join('speciality_role', 'worker.fk_speciality_role = speciality_role.id')
+									//->join('speciality', 'worker.fk_speciality = speciality.id')
+									//->join('speciality_role', 'worker.fk_speciality_role = speciality_role.id')
 									->get()->result();
 
 							} else {
