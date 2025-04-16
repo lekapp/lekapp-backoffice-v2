@@ -673,15 +673,6 @@ class App extends CI_Controller
 
         $date = new DateTime('NOW', new DateTimeZone('America/Santiago'));
 
-        log_message('error', 
-          json_encode(
-            [
-              'date' => $date->format('Y-m-d H:i:s'),
-              'payload' => $payload
-            ]
-          )
-        );
-
         $registryList = json_decode($payload['payload']);
 
         foreach($registryList as $registry){
