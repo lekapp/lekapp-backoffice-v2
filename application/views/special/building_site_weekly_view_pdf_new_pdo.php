@@ -331,7 +331,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                 </td>
                                 <td>
                                     <?php 
-                                        echo $activity->activityTotalQuantityBeforeCurrentWeek / $activity->qty * 100;
+                                        echo $activity->qty > 0 ? $activity->activityTotalQuantityBeforeCurrentWeek / $activity->qty * 100 : 0;
                                         $aAn3 += $activity->activityTotalRealAdvanceBeforeCurrentWeek;
                                     ?>
                                 </td>
@@ -358,7 +358,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                 </td>
                                 <td>
                                     <?php
-                                    echo ($activity->activityTotalQuantityInCurrentWeek / $activity->qty * 100);
+                                    echo $activity->qty > 0 ? ($activity->activityTotalQuantityInCurrentWeek / $activity->qty * 100) : 0;
                                     $a3 += $activity->activityTotalRealAdvanceInCurrentWeek;
                                     ?>
                                 </td>
@@ -385,7 +385,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                 </td>
                                 <td>
                                     <?php 
-                                        echo ($activity->activityTotalQuantityBeforeCurrentWeek + $activity->activityTotalQuantityInCurrentWeek) / $activity->qty * 100;
+                                        echo $activity->qty > 0 ? ($activity->activityTotalQuantityBeforeCurrentWeek + $activity->activityTotalQuantityInCurrentWeek) / $activity->qty * 100 : 0;
                                         $aAc3 += $activity->activityTotalRealAdvanceBeforeCurrentWeek + $activity->activityTotalRealAdvanceInCurrentWeek;
                                     ?>
                                 </td>
