@@ -610,11 +610,11 @@ class App extends CI_Controller
         ];
 
         $specialityIds = [
-          $user->fk_speciality
+          //$user->fk_speciality
         ];
 
         $specialityRoleIds = [
-          $user->fk_speciality_role
+          //$user->fk_speciality_role
         ];
 
         $user->extra = [
@@ -668,6 +668,8 @@ class App extends CI_Controller
       $payload = json_decode(file_get_contents('php://input'), true);
 
       //$user = (object) $payload['user'];
+
+      log_message('error', 'Payload: ' . json_encode($payload));
 
       if ($signinType == 'overseer') {
 
