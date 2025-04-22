@@ -3679,7 +3679,7 @@ class Building_sites extends CI_Controller
 						array(
 							'fk_building_site' => $building_site_id,
 							'activity_date' => $activity_date,
-							'checked' => null
+							'checked !=' => null
 						)
 					)
 				);
@@ -3724,7 +3724,8 @@ class Building_sites extends CI_Controller
 								array(
 									'fk_building_site' => $building_site_id,
 									'activity_date' => $activity_date,
-									'fk_activity' => $activity->id
+									'fk_activity' => $activity->id,
+									'checked !=' => null
 								)
 							)
 						);
@@ -3847,7 +3848,8 @@ class Building_sites extends CI_Controller
 			[
 				[
 					'fk_building_site' => $dr[0]->fk_building_site,
-					'activity_date' => $dr[0]->activity_date
+					'activity_date' => $dr[0]->activity_date,
+					'checked !=' => null
 				]
 			]
 		);
@@ -3911,7 +3913,8 @@ class Building_sites extends CI_Controller
 			array(
 				array(
 					'fk_building_site' => $data[0]->fk_building_site,
-					'activity_date' => $data[0]->activity_date
+					'activity_date' => $data[0]->activity_date,
+					'checked !=' => null
 				)
 			)
 		);
@@ -3950,7 +3953,8 @@ class Building_sites extends CI_Controller
 				$i = $this->activity_registry->obtener([
 					[
 						'fk_building_site' => $data[0]->fk_building_site,
-						'id' => $registry
+						'id' => $registry,
+						'checked !=' => null
 					]
 				]);
 				$ad = $i[0];
@@ -3998,7 +4002,8 @@ class Building_sites extends CI_Controller
 			$ac = $this->activity_registry->obtener(
 				[
 					[
-						'fk_image' => $photosIds[$kk]
+						'fk_image' => $photosIds[$kk],
+						'checked !=' => null,
 					]
 				]
 			);
