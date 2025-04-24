@@ -669,7 +669,7 @@ class App extends CI_Controller
 
       //$user = (object) $payload['user'];
 
-      log_message('error', 'Payload: ' . json_encode($payload));
+      //log_message('error', 'Payload: ' . json_encode($payload));
 
       if ($signinType == 'overseer') {
 
