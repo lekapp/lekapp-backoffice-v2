@@ -3462,16 +3462,16 @@ class Building_sites extends CI_Controller
 
 				//real data
 
-				$max_p_avance_overall = $this->get_max_p_avance(); // Get the maximum p_avance
+				$max_total_p_avance_overall = $this->get_max_total_p_avance(); // Get the maximum sum of p_avance on a single day
 				$rwh = $this->get_weekly_report_data($weeklyData->selectedDateMaxDayCurrentWeek);
 
 				$cumulative_proportional_p_avance_for_rwh_insert = 0; // Initialize a cumulative proportional variable
 
 				foreach ($rwh as $key => $value) {
-					// Calculate the proportional accum_y based on the overall max p_avance
+					// Calculate the proportional accum_y based on the overall max total p_avance
 					$proportional_accum_y = 0;
-					if ($max_p_avance_overall > 0) {
-						$proportional_accum_y = ($value['daily_p_avance'] / $max_p_avance_overall) * 100;
+					if ($max_total_p_avance_overall > 0) {
+						$proportional_accum_y = ($value['daily_p_avance'] / $max_total_p_avance_overall) * 100;
 					}
 
 					// Ensure the proportional value doesn't exceed 100
@@ -3515,12 +3515,15 @@ class Building_sites extends CI_Controller
 		return $result; // Return the basic daily sums
 	}
 
-	public function get_max_p_avance()
+	public function get_max_total_p_avance()
 	{
-		$this->db->select_max('p_avance', 'max_p_avance');
+		$this->db->select('activity_date, SUM(p_avance) as total_daily_p_avance');
 		$this->db->from('activity_registry');
+		$this->db->group_by('activity_date');
+		$this->db->order_by('total_daily_p_avance', 'DESC');
+		$this->db->limit(1);
 		$result = $this->db->get()->row();
-		return ($result && $result->max_p_avance !== null) ? $result->max_p_avance : 0;
+		return ($result && $result->total_daily_p_avance !== null) ? $result->total_daily_p_avance : 0;
 	}
 
 	public function get_weekly_report_data($date_limit)
