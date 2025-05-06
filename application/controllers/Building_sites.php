@@ -3488,6 +3488,10 @@ class Building_sites extends CI_Controller
 		return $result; // Return the basic daily sums
 	}
 
+	public function showData($date_limit){
+		d($this->get_activity_summary($date_limit));
+	}
+
 	public function get_weekly_report_data($date_limit)
 	{
 		// Use a subquery to get the last registry for each activity_date and fk_activity.
