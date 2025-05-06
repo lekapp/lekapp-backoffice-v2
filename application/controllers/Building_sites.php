@@ -3441,7 +3441,7 @@ class Building_sites extends CI_Controller
 				foreach($twh as $key => $value) {
 					$this->db->set('fk_building_site', $building_site_id);
 					$this->db->set('fk_weekly_report', $new);
-					$this->db->set('x', $value['activity_date']);
+					$this->db->set('x', $value['activity_date_dt']);
 					$this->db->set('y', $value['daily_hh']);
 					$this->db->set('accum_y', $value['accum_hh']);
 					$this->db->insert('weekly_report_twh');
@@ -3469,11 +3469,11 @@ class Building_sites extends CI_Controller
 
 	public function get_activity_summary($date_limit)
 	{
-		$this->db->select('activity_date, SUM(hh) as daily_hh');
+		$this->db->select('activity_date_dt, SUM(hh) as daily_hh');
 		$this->db->from('activity_data');
 		$this->db->where('activity_date_dt <=', $date_limit); // Use the date_limit parameter
-		$this->db->group_by('activity_date');
-		$this->db->order_by('activity_date');
+		$this->db->group_by('activity_date_dt');
+		$this->db->order_by('activity_date_dt');
 
 		$result = $this->db->get()->result_array(); // Get the result as an array
 
