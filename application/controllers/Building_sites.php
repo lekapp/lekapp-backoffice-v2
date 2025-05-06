@@ -3436,6 +3436,7 @@ class Building_sites extends CI_Controller
 
 				//theorical data
 
+				$total_hh_overall = $this->get_total_hh(); // Get the total hh without date limit
 				$twh = $this->get_activity_summary($weeklyData->selectedDateMaxDayPreviousWeek);
 
 				$cumulative_hh_for_insert = 0; // Initialize a cumulative variable for the inserts
@@ -3443,26 +3444,44 @@ class Building_sites extends CI_Controller
 				foreach ($twh as $key => $value) {
 					$cumulative_hh_for_insert += $value['daily_hh']; // Add the current day's hh
 
+					$proportional_accum_y = 0;
+					if ($total_hh_overall > 0) {
+						$proportional_accum_y = ($cumulative_hh_for_insert / $total_hh_overall) * 100;
+					}
+
+					// Ensure the proportional value doesn't exceed 100
+					$proportional_accum_y = min(100, $proportional_accum_y);
+
 					$this->db->set('fk_building_site', $building_site_id);
 					$this->db->set('fk_weekly_report', $new);
 					$this->db->set('x', $value['activity_date_dt']);
 					$this->db->set('y', $value['daily_hh']);
-					$this->db->set('accum_y', $cumulative_hh_for_insert); // Use the running total
+					$this->db->set('accum_y', $proportional_accum_y); // Use the proportional running total
 					$this->db->insert('weekly_report_twh');
 				}
 
+				//real data
+
+				$max_p_avance_overall = $this->get_max_p_avance(); // Get the maximum p_avance
 				$rwh = $this->get_weekly_report_data($weeklyData->selectedDateMaxDayCurrentWeek);
 
-				$cumulative_hh_for_rwh_insert = 0; // Initialize a cumulative variable for rwh inserts
+				$cumulative_proportional_p_avance_for_rwh_insert = 0; // Initialize a cumulative proportional variable
 
 				foreach ($rwh as $key => $value) {
-					$cumulative_hh_for_rwh_insert += $value['y']; // Accumulate the daily difference ('y')
+					// Calculate the proportional accum_y based on the overall max p_avance
+					$proportional_accum_y = 0;
+					if ($max_p_avance_overall > 0) {
+						$proportional_accum_y = ($value['daily_p_avance'] / $max_p_avance_overall) * 100;
+					}
+
+					// Ensure the proportional value doesn't exceed 100
+					$proportional_accum_y = min(100, $proportional_accum_y);
 
 					$this->db->set('fk_building_site', $building_site_id);
 					$this->db->set('fk_weekly_report', $new);
 					$this->db->set('x', $value['activity_date']);
-					$this->db->set('y', $value['y']);
-					$this->db->set('accum_y', $cumulative_hh_for_rwh_insert); // Use the running total
+					$this->db->set('y', $value['y']); // 'y' now represents the daily difference in p_avance
+					$this->db->set('accum_y', $proportional_accum_y); // Use the proportional p_avance
 					$this->db->insert('weekly_report_rwh');
 				}
 					
@@ -3473,6 +3492,14 @@ class Building_sites extends CI_Controller
 			$this->load->view(SPATH . 'building_site_weekly_add_new_structure', array('user' => $user[0], 'data' => $data[0]));
 			$this->load->view(CPATH . 'foot');
 		}
+	}
+
+	public function get_total_hh()
+	{
+		$this->db->select('SUM(hh) as total_hh');
+		$this->db->from('activity_data');
+		$result = $this->db->get()->row();
+		return ($result && $result->total_hh !== null) ? $result->total_hh : 0;
 	}
 
 	public function get_activity_summary($date_limit)
@@ -3488,8 +3515,12 @@ class Building_sites extends CI_Controller
 		return $result; // Return the basic daily sums
 	}
 
-	public function showData($date_limit){
-		d($this->get_activity_summary($date_limit));
+	public function get_max_p_avance()
+	{
+		$this->db->select_max('p_avance', 'max_p_avance');
+		$this->db->from('activity_registry');
+		$result = $this->db->get()->row();
+		return ($result && $result->max_p_avance !== null) ? $result->max_p_avance : 0;
 	}
 
 	public function get_weekly_report_data($date_limit)
@@ -3501,8 +3532,8 @@ class Building_sites extends CI_Controller
 			->group_by('activity_date, fk_activity')
 			->get_compiled_select();
 
-		// Main query to retrieve data from activity_registry using the subquery.
-		$this->db->select('ar.activity_date, ar.hh as daily_accum_y'); // Renamed for clarity
+		// Main query to retrieve data from activity_registry using the subquery, selecting p_avance.
+		$this->db->select('ar.activity_date, ar.p_avance as daily_p_avance');
 		$this->db->from('activity_registry ar');
 		$this->db->join('(' . $subquery . ') AS sub', 'ar.id = sub.max_id', 'inner');
 		$this->db->where('ar.activity_date <=', $date_limit);
@@ -3514,11 +3545,11 @@ class Building_sites extends CI_Controller
 			return [];
 		}
 
-		// Calculate the difference (y) from the previous day's accum_y.
-		$previous_hh = 0;
+		// Calculate the difference (y) from the previous day's p_avance.
+		$previous_p_avance = 0;
 		foreach ($result as &$row) {
-			$row['y'] = $row['daily_accum_y'] - $previous_hh;
-			$previous_hh = $row['daily_accum_y'];
+			$row['y'] = $row['daily_p_avance'] - $previous_p_avance;
+			$previous_p_avance = $row['daily_p_avance'];
 		}
 		return $result;
 	}
