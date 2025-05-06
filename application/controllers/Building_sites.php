@@ -3462,7 +3462,7 @@ class Building_sites extends CI_Controller
 
 				//real data
 
-				$rwh = $this->get_progressive_activity_data($weeklyData->selectedDateMaxDayCurrentWeek);
+				$rwh = $this->get_progressive_activity_data($weeklyData->selectedDateMaxDayCurrentWeek, $building_site_id); // Get the progressive activity data for the building site
 
 				foreach ($rwh as $key => $value) {
 					$this->db->set('fk_building_site', $building_site_id);
@@ -3505,12 +3505,14 @@ class Building_sites extends CI_Controller
 		return $result; // Return the basic daily sums
 	}
 
-	public function get_progressive_activity_data($date_limit)
+	public function get_progressive_activity_data($date_limit, $building_site_id)
 	{
 		// Subquery to get the latest registry for each activity up to the date limit.
 		$subquery = $this->db->select('fk_activity, MAX(activity_date) as latest_date')
 			->from('activity_registry')
 			->where('activity_date <=', $date_limit)
+			->where('fk_building_site', $building_site_id)
+			->where('checked !=', null)
 			->group_by('fk_activity')
 			->get_compiled_select();
 
@@ -3519,6 +3521,8 @@ class Building_sites extends CI_Controller
 		$this->db->from('activity_registry ar');
 		$this->db->join('(' . $subquery . ') AS sub', 'ar.fk_activity = sub.fk_activity AND ar.activity_date = sub.latest_date', 'inner');
 		$this->db->where('ar.activity_date <=', $date_limit);
+		$this->db->where('ar.fk_building_site', $building_site_id);
+		$this->db->where('ar.checked !=', null);
 		$this->db->order_by('ar.activity_date');
 
 		$latest_registries = $this->db->get()->result_array();
