@@ -3462,25 +3462,14 @@ class Building_sites extends CI_Controller
 
 				//real data
 
-				$rwh = $this->get_progressive_activity_data($weeklyData->selectedDateMaxDayCurrentWeek, $building_site_id);
-
-				$max_cumulative_p_avance = 0;
-				foreach ($rwh as $data) {
-					$max_cumulative_p_avance = max($max_cumulative_p_avance, $data['cumulative_p_avance']);
-				}
+				$rwh = $this->get_progressive_activity_data($weeklyData->selectedDateMaxDayCurrentWeek);
 
 				foreach ($rwh as $key => $value) {
-					$proportional_accum_y = 0;
-					if ($max_cumulative_p_avance > 0) {
-						$proportional_accum_y = ($value['cumulative_p_avance'] / $max_cumulative_p_avance) * 100;
-					}
-					$proportional_accum_y = min(100, $proportional_accum_y);
-
 					$this->db->set('fk_building_site', $building_site_id);
 					$this->db->set('fk_weekly_report', $new);
 					$this->db->set('x', $value['activity_date']);
 					$this->db->set('y', isset($rwh[$key - 1]['cumulative_p_avance']) ? $value['cumulative_p_avance'] - $rwh[$key - 1]['cumulative_p_avance'] : $value['cumulative_p_avance']); // Approximate daily change
-					$this->db->set('accum_y', $proportional_accum_y);
+					$this->db->set('accum_y', $value['cumulative_p_avance']); // Use the direct cumulative p_avance
 					$this->db->insert('weekly_report_rwh');
 				}
 
@@ -3516,14 +3505,12 @@ class Building_sites extends CI_Controller
 		return $result; // Return the basic daily sums
 	}
 
-	public function get_progressive_activity_data($date_limit, $building_site_id)
+	public function get_progressive_activity_data($date_limit)
 	{
 		// Subquery to get the latest registry for each activity up to the date limit.
 		$subquery = $this->db->select('fk_activity, MAX(activity_date) as latest_date')
 			->from('activity_registry')
-			->where('checked !=', null)
 			->where('activity_date <=', $date_limit)
-			->where('fk_building_site', $building_site_id)
 			->group_by('fk_activity')
 			->get_compiled_select();
 
@@ -3532,8 +3519,6 @@ class Building_sites extends CI_Controller
 		$this->db->from('activity_registry ar');
 		$this->db->join('(' . $subquery . ') AS sub', 'ar.fk_activity = sub.fk_activity AND ar.activity_date = sub.latest_date', 'inner');
 		$this->db->where('ar.activity_date <=', $date_limit);
-		$this->db->where('ar.fk_building_site', $building_site_id);
-		$this->db->where('ar.checked !=', null);
 		$this->db->order_by('ar.activity_date');
 
 		$latest_registries = $this->db->get()->result_array();
