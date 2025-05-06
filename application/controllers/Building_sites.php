@@ -3382,11 +3382,11 @@ class Building_sites extends CI_Controller
 
 				$weeklyData->projectTotalRealWorkHoursInCurrentWeek = $a2 / $weeklyData->activitiesResume->activityProjectProgrammedWorkHours;
 
-				foreach($specialities as $key => $speciality) {
+				foreach ($specialities as $key => $speciality) {
 					$aAn2 = 0;
 					$a2 = 0;
-					foreach($activities as $activity) {
-						if($activity->fk_speciality == $speciality->id) {
+					foreach ($activities as $activity) {
+						if ($activity->fk_speciality == $speciality->id) {
 							$aAn2 += round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2);
 							$a2 += round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2);
 						}
@@ -3437,7 +3437,7 @@ class Building_sites extends CI_Controller
 				//theorical data
 
 				$total_hh_overall = $this->get_total_hh(); // Get the total hh without date limit
-				$twh = $this->get_activity_summary($weeklyData->selectedDateMaxDayPreviousWeek);
+				$twh = $this->get_activity_summary($weeklyData->selectedDateMaxDayPreviousWeek, $building_site_id); // Get the activity summary for the building site
 
 				$cumulative_hh_for_insert = 0; // Initialize a cumulative variable for the inserts
 
@@ -3462,7 +3462,7 @@ class Building_sites extends CI_Controller
 
 				//real data
 
-				$rwh = $this->get_progressive_activity_data($weeklyData->selectedDateMaxDayCurrentWeek);
+				$rwh = $this->get_progressive_activity_data($weeklyData->selectedDateMaxDayCurrentWeek, $building_site_id);
 
 				$max_cumulative_p_avance = 0;
 				foreach ($rwh as $data) {
@@ -3483,7 +3483,7 @@ class Building_sites extends CI_Controller
 					$this->db->set('accum_y', $proportional_accum_y);
 					$this->db->insert('weekly_report_rwh');
 				}
-					
+
 				redirect('building_sites/weekly/' . $building_site_id);
 			}
 		} else {
@@ -3501,11 +3501,12 @@ class Building_sites extends CI_Controller
 		return ($result && $result->total_hh !== null) ? $result->total_hh : 0;
 	}
 
-	public function get_activity_summary($date_limit)
+	public function get_activity_summary($date_limit, $building_site_id)
 	{
 		$this->db->select('activity_date_dt, SUM(hh) as daily_hh');
 		$this->db->from('activity_data');
 		$this->db->where('activity_date_dt <=', $date_limit);
+		$this->db->where('fk_building_site', $building_site_id);
 		$this->db->group_by('activity_date_dt');
 		$this->db->order_by('activity_date_dt');
 
@@ -3514,12 +3515,13 @@ class Building_sites extends CI_Controller
 		return $result; // Return the basic daily sums
 	}
 
-	public function get_progressive_activity_data($date_limit)
+	public function get_progressive_activity_data($date_limit, $building_site_id)
 	{
 		// Subquery to get the latest registry for each activity up to the date limit.
 		$subquery = $this->db->select('fk_activity, MAX(activity_date) as latest_date')
 			->from('activity_registry')
 			->where('activity_date <=', $date_limit)
+			->where('fk_building_site', $building_site_id)
 			->group_by('fk_activity')
 			->get_compiled_select();
 
@@ -3528,6 +3530,7 @@ class Building_sites extends CI_Controller
 		$this->db->from('activity_registry ar');
 		$this->db->join('(' . $subquery . ') AS sub', 'ar.fk_activity = sub.fk_activity AND ar.activity_date = sub.latest_date', 'inner');
 		$this->db->where('ar.activity_date <=', $date_limit);
+		$this->db->where('ar.fk_building_site', $building_site_id);
 		$this->db->order_by('ar.activity_date');
 
 		$latest_registries = $this->db->get()->result_array();
@@ -3873,7 +3876,6 @@ class Building_sites extends CI_Controller
 									//->join('speciality', 'worker.fk_speciality = speciality.id')
 									//->join('speciality_role', 'worker.fk_speciality_role = speciality_role.id')
 									->get()->result();
-
 							} else {
 
 								$t = $ta[$a->activity->activity_code];
