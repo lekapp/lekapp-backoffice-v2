@@ -3443,7 +3443,7 @@ class Building_sites extends CI_Controller
 					$this->db->set('fk_weekly_report', $new);
 					$this->db->set('x', $value['activity_date']);
 					$this->db->set('y', $value['daily_hh']);
-					$this->db->set('accum_hh', $value['accum_hh']);
+					$this->db->set('accum_y', $value['accum_hh']);
 					$this->db->insert('weekly_report_twh');
 				}
 
