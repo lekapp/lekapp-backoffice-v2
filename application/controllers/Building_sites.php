@@ -3463,7 +3463,7 @@ class Building_sites extends CI_Controller
 				//real data
 
 				$rwh = $this->get_progressive_activity_data($weeklyData->selectedDateMaxDayCurrentWeek, $building_site_id); // Get the progressive activity data for the building site
-
+				//get amount of fk_activity within data
 				foreach ($rwh as $key => $value) {
 					$this->db->set('fk_building_site', $building_site_id);
 					$this->db->set('fk_weekly_report', $new);
@@ -3507,6 +3507,13 @@ class Building_sites extends CI_Controller
 
 	public function get_progressive_activity_data($date_limit, $building_site_id)
 	{
+
+		$activity_count = $this->db->select('COUNT(DISTINCT fk_activity) as total')->from('activity_registry')
+			->where('fk_building_site', $building_site_id)
+			->where('activity_date <=', $date_limit)
+			->where('checked !=', null)
+			->get()->row()->total;
+
 		// Subquery to get the latest registry for each activity up to the date limit.
 		$subquery = $this->db->select('fk_activity, MAX(activity_date) as latest_date')
 			->from('activity_registry')
@@ -3547,7 +3554,8 @@ class Building_sites extends CI_Controller
 		$cumulative_p_avance = 0;
 		$progressive_data = [];
 		foreach ($daily_progress as $date => $total_p_avance) {
-			$cumulative_p_avance += $total_p_avance;
+			$t = $total_p_avance / $activity_count;
+			$cumulative_p_avance += $t;
 			$progressive_data[] = [
 				'activity_date' => $date,
 				'cumulative_p_avance' => $cumulative_p_avance,
