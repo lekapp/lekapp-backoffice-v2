@@ -3430,6 +3430,34 @@ class Building_sites extends CI_Controller
 				$this->db->where('id', $new);
 				$this->db->update('weekly_report');
 
+				//building_site_id = $building_site_id
+				//first date in building site = $weeklyData->selectedDateMaxDayPreviousWeek
+				//last date in building site = $weeklyData->selectedDateMaxDayCurrentWeek
+
+				//theorical data
+
+				$twh = $this->get_activity_summary($weeklyData->selectedDateMaxDayPreviousWeek);
+
+				foreach($twh as $key => $value) {
+					$this->db->set('fk_building_site', $building_site_id);
+					$this->db->set('fk_weekly_report', $new);
+					$this->db->set('x', $value['activity_date']);
+					$this->db->set('y', $value['daily_hh']);
+					$this->db->set('accum_hh', $value['accum_hh']);
+					$this->db->insert('weekly_report_twh');
+				}
+
+				$rwh = $this->get_weekly_report_data($weeklyData->selectedDateMaxDayCurrentWeek);
+
+				foreach($rwh as $key => $value) {
+					$this->db->set('fk_building_site', $building_site_id);
+					$this->db->set('fk_weekly_report', $new);
+					$this->db->set('x', $value['activity_date']);
+					$this->db->set('y', $value['y']);
+					$this->db->set('accum_y', $value['accum_y']);
+					$this->db->insert('weekly_report_rwh');
+				}
+					
 				redirect('building_sites/weekly/' . $building_site_id);
 			}
 		} else {
@@ -3437,6 +3465,60 @@ class Building_sites extends CI_Controller
 			$this->load->view(SPATH . 'building_site_weekly_add_new_structure', array('user' => $user[0], 'data' => $data[0]));
 			$this->load->view(CPATH . 'foot');
 		}
+	}
+
+	public function get_activity_summary($date_limit)
+	{
+		$this->db->select('activity_date, SUM(hh) as daily_hh');
+		$this->db->from('activity_data');
+		$this->db->where('activity_date_dt <=', $date_limit); // Use the date_limit parameter
+		$this->db->group_by('activity_date');
+		$this->db->order_by('activity_date');
+
+		$result = $this->db->get()->result_array(); // Get the result as an array
+
+		if (empty($result)) {
+			return []; // Return an empty array if no data
+		}
+
+		// Calculate the cumulative sum in PHP
+		$cumulative_hh = 0;
+		foreach ($result as &$row) { // Use a reference to modify the original array
+			$cumulative_hh += $row['daily_hh'];
+			$row['accum_hh'] = $cumulative_hh; // Add the cumulative sum to each row
+		}
+		return $result;
+	}
+
+	public function get_weekly_report_data($date_limit)
+	{
+		// Use a subquery to get the last registry for each activity_date and fk_activity.
+		$subquery = $this->db->select('MAX(id_activity_registry) as max_id') // Changed id to id_activity_registry
+			->from('activity_registry')
+			->where('activity_date <=', $date_limit) // Use the date_limit parameter
+			->group_by('activity_date, fk_activity')
+			->get_compiled_select();
+
+		// Main query to retrieve data from activity_registry using the subquery.
+		$this->db->select('ar.activity_date, ar.hh as accum_y'); // Changed alias to accum_y to match your description
+		$this->db->from('activity_registry ar');
+		$this->db->join('(' . $subquery . ') AS sub', 'ar.id_activity_registry = sub.max_id', 'inner'); // Changed id to id_activity_registry
+		$this->db->where('ar.activity_date <=', $date_limit); // Use the date_limit parameter
+		$this->db->order_by('ar.activity_date');
+
+		$result = $this->db->get()->result_array();
+
+		if (empty($result)) {
+			return [];
+		}
+
+		// Calculate the difference (y) from the previous day's accum_y.
+		$previous_hh = 0;
+		foreach ($result as &$row) {
+			$row['y'] = $row['accum_y'] - $previous_hh;
+			$previous_hh = $row['accum_y'];
+		}
+		return $result;
 	}
 
 	/**
