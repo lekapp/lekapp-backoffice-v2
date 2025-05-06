@@ -3462,26 +3462,25 @@ class Building_sites extends CI_Controller
 
 				//real data
 
-				$max_total_p_avance_overall = $this->get_max_total_p_avance(); // Get the maximum sum of p_avance on a single day
-				$rwh = $this->get_weekly_report_data($weeklyData->selectedDateMaxDayCurrentWeek);
+				$rwh = $this->get_progressive_activity_data($weeklyData->selectedDateMaxDayCurrentWeek);
 
-				$cumulative_proportional_p_avance_for_rwh_insert = 0; // Initialize a cumulative proportional variable
+				$max_cumulative_p_avance = 0;
+				foreach ($rwh as $data) {
+					$max_cumulative_p_avance = max($max_cumulative_p_avance, $data['cumulative_p_avance']);
+				}
 
 				foreach ($rwh as $key => $value) {
-					// Calculate the proportional accum_y based on the overall max total p_avance
 					$proportional_accum_y = 0;
-					if ($max_total_p_avance_overall > 0) {
-						$proportional_accum_y = ($value['daily_p_avance'] / $max_total_p_avance_overall) * 100;
+					if ($max_cumulative_p_avance > 0) {
+						$proportional_accum_y = ($value['cumulative_p_avance'] / $max_cumulative_p_avance) * 100;
 					}
-
-					// Ensure the proportional value doesn't exceed 100
 					$proportional_accum_y = min(100, $proportional_accum_y);
 
 					$this->db->set('fk_building_site', $building_site_id);
 					$this->db->set('fk_weekly_report', $new);
 					$this->db->set('x', $value['activity_date']);
-					$this->db->set('y', $value['y']); // 'y' now represents the daily difference in p_avance
-					$this->db->set('accum_y', $proportional_accum_y); // Use the proportional p_avance
+					$this->db->set('y', isset($rwh[$key - 1]['cumulative_p_avance']) ? $value['cumulative_p_avance'] - $rwh[$key - 1]['cumulative_p_avance'] : $value['cumulative_p_avance']); // Approximate daily change
+					$this->db->set('accum_y', $proportional_accum_y);
 					$this->db->insert('weekly_report_rwh');
 				}
 					
@@ -3515,46 +3514,52 @@ class Building_sites extends CI_Controller
 		return $result; // Return the basic daily sums
 	}
 
-	public function get_max_total_p_avance()
+	public function get_progressive_activity_data($date_limit)
 	{
-		$this->db->select('activity_date, SUM(p_avance) as total_daily_p_avance');
-		$this->db->from('activity_registry');
-		$this->db->group_by('activity_date');
-		$this->db->order_by('total_daily_p_avance', 'DESC');
-		$this->db->limit(1);
-		$result = $this->db->get()->row();
-		return ($result && $result->total_daily_p_avance !== null) ? $result->total_daily_p_avance : 0;
-	}
-
-	public function get_weekly_report_data($date_limit)
-	{
-		// Use a subquery to get the last registry for each activity_date and fk_activity.
-		$subquery = $this->db->select('MAX(id) as max_id')
+		// Subquery to get the latest registry for each activity up to the date limit.
+		$subquery = $this->db->select('fk_activity, MAX(activity_date) as latest_date')
 			->from('activity_registry')
 			->where('activity_date <=', $date_limit)
-			->group_by('activity_date, fk_activity')
+			->group_by('fk_activity')
 			->get_compiled_select();
 
-		// Main query to retrieve data from activity_registry using the subquery, selecting p_avance.
-		$this->db->select('ar.activity_date, ar.p_avance as daily_p_avance');
+		// Main query to join with the subquery and get the p_avance of the latest registries.
+		$this->db->select('ar.activity_date, ar.p_avance');
 		$this->db->from('activity_registry ar');
-		$this->db->join('(' . $subquery . ') AS sub', 'ar.id = sub.max_id', 'inner');
+		$this->db->join('(' . $subquery . ') AS sub', 'ar.fk_activity = sub.fk_activity AND ar.activity_date = sub.latest_date', 'inner');
 		$this->db->where('ar.activity_date <=', $date_limit);
 		$this->db->order_by('ar.activity_date');
 
-		$result = $this->db->get()->result_array();
+		$latest_registries = $this->db->get()->result_array();
 
-		if (empty($result)) {
+		if (empty($latest_registries)) {
 			return [];
 		}
 
-		// Calculate the difference (y) from the previous day's p_avance.
-		$previous_p_avance = 0;
-		foreach ($result as &$row) {
-			$row['y'] = $row['daily_p_avance'] - $previous_p_avance;
-			$previous_p_avance = $row['daily_p_avance'];
+		// Group by date and sum p_avance for each day.
+		$daily_progress = [];
+		foreach ($latest_registries as $registry) {
+			if (!isset($daily_progress[$registry['activity_date']])) {
+				$daily_progress[$registry['activity_date']] = 0;
+			}
+			$daily_progress[$registry['activity_date']] += $registry['p_avance'];
 		}
-		return $result;
+
+		// Sort by date.
+		ksort($daily_progress);
+
+		// Calculate cumulative sum.
+		$cumulative_p_avance = 0;
+		$progressive_data = [];
+		foreach ($daily_progress as $date => $total_p_avance) {
+			$cumulative_p_avance += $total_p_avance;
+			$progressive_data[] = [
+				'activity_date' => $date,
+				'cumulative_p_avance' => $cumulative_p_avance,
+			];
+		}
+
+		return $progressive_data;
 	}
 
 	/**
