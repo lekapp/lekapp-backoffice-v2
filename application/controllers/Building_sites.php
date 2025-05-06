@@ -3438,23 +3438,31 @@ class Building_sites extends CI_Controller
 
 				$twh = $this->get_activity_summary($weeklyData->selectedDateMaxDayPreviousWeek);
 
-				foreach($twh as $key => $value) {
+				$cumulative_hh_for_insert = 0; // Initialize a cumulative variable for the inserts
+
+				foreach ($twh as $key => $value) {
+					$cumulative_hh_for_insert += $value['daily_hh']; // Add the current day's hh
+
 					$this->db->set('fk_building_site', $building_site_id);
 					$this->db->set('fk_weekly_report', $new);
 					$this->db->set('x', $value['activity_date_dt']);
 					$this->db->set('y', $value['daily_hh']);
-					$this->db->set('accum_y', $value['accum_hh']);
+					$this->db->set('accum_y', $cumulative_hh_for_insert); // Use the running total
 					$this->db->insert('weekly_report_twh');
 				}
 
 				$rwh = $this->get_weekly_report_data($weeklyData->selectedDateMaxDayCurrentWeek);
 
-				foreach($rwh as $key => $value) {
+				$cumulative_hh_for_rwh_insert = 0; // Initialize a cumulative variable for rwh inserts
+
+				foreach ($rwh as $key => $value) {
+					$cumulative_hh_for_rwh_insert += $value['y']; // Accumulate the daily difference ('y')
+
 					$this->db->set('fk_building_site', $building_site_id);
 					$this->db->set('fk_weekly_report', $new);
 					$this->db->set('x', $value['activity_date']);
 					$this->db->set('y', $value['y']);
-					$this->db->set('accum_y', $value['accum_y']);
+					$this->db->set('accum_y', $cumulative_hh_for_rwh_insert); // Use the running total
 					$this->db->insert('weekly_report_rwh');
 				}
 					
@@ -3471,39 +3479,29 @@ class Building_sites extends CI_Controller
 	{
 		$this->db->select('activity_date_dt, SUM(hh) as daily_hh');
 		$this->db->from('activity_data');
-		$this->db->where('activity_date_dt <=', $date_limit); // Use the date_limit parameter
+		$this->db->where('activity_date_dt <=', $date_limit);
 		$this->db->group_by('activity_date_dt');
 		$this->db->order_by('activity_date_dt');
 
-		$result = $this->db->get()->result_array(); // Get the result as an array
+		$result = $this->db->get()->result_array();
 
-		if (empty($result)) {
-			return []; // Return an empty array if no data
-		}
-
-		// Calculate the cumulative sum in PHP
-		$cumulative_hh = 0;
-		foreach ($result as &$row) { // Use a reference to modify the original array
-			$cumulative_hh += $row['daily_hh'];
-			$row['accum_hh'] = $cumulative_hh; // Add the cumulative sum to each row
-		}
-		return $result;
+		return $result; // Return the basic daily sums
 	}
 
 	public function get_weekly_report_data($date_limit)
 	{
 		// Use a subquery to get the last registry for each activity_date and fk_activity.
-		$subquery = $this->db->select('MAX(id) as max_id') // Changed id to id_activity_registry
+		$subquery = $this->db->select('MAX(id) as max_id')
 			->from('activity_registry')
-			->where('activity_date <=', $date_limit) // Use the date_limit parameter
+			->where('activity_date <=', $date_limit)
 			->group_by('activity_date, fk_activity')
 			->get_compiled_select();
 
 		// Main query to retrieve data from activity_registry using the subquery.
-		$this->db->select('ar.activity_date, ar.hh as accum_y'); // Changed alias to accum_y to match your description
+		$this->db->select('ar.activity_date, ar.hh as daily_accum_y'); // Renamed for clarity
 		$this->db->from('activity_registry ar');
-		$this->db->join('(' . $subquery . ') AS sub', 'ar.id = sub.max_id', 'inner'); // Changed id to id_activity_registry
-		$this->db->where('ar.activity_date <=', $date_limit); // Use the date_limit parameter
+		$this->db->join('(' . $subquery . ') AS sub', 'ar.id = sub.max_id', 'inner');
+		$this->db->where('ar.activity_date <=', $date_limit);
 		$this->db->order_by('ar.activity_date');
 
 		$result = $this->db->get()->result_array();
@@ -3515,8 +3513,8 @@ class Building_sites extends CI_Controller
 		// Calculate the difference (y) from the previous day's accum_y.
 		$previous_hh = 0;
 		foreach ($result as &$row) {
-			$row['y'] = $row['accum_y'] - $previous_hh;
-			$previous_hh = $row['accum_y'];
+			$row['y'] = $row['daily_accum_y'] - $previous_hh;
+			$previous_hh = $row['daily_accum_y'];
 		}
 		return $result;
 	}
