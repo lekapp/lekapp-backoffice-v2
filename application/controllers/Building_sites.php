@@ -3493,7 +3493,7 @@ class Building_sites extends CI_Controller
 	public function get_weekly_report_data($date_limit)
 	{
 		// Use a subquery to get the last registry for each activity_date and fk_activity.
-		$subquery = $this->db->select('MAX(id_activity_registry) as max_id') // Changed id to id_activity_registry
+		$subquery = $this->db->select('MAX(id) as max_id') // Changed id to id_activity_registry
 			->from('activity_registry')
 			->where('activity_date <=', $date_limit) // Use the date_limit parameter
 			->group_by('activity_date, fk_activity')
@@ -3502,7 +3502,7 @@ class Building_sites extends CI_Controller
 		// Main query to retrieve data from activity_registry using the subquery.
 		$this->db->select('ar.activity_date, ar.hh as accum_y'); // Changed alias to accum_y to match your description
 		$this->db->from('activity_registry ar');
-		$this->db->join('(' . $subquery . ') AS sub', 'ar.id_activity_registry = sub.max_id', 'inner'); // Changed id to id_activity_registry
+		$this->db->join('(' . $subquery . ') AS sub', 'ar.id = sub.max_id', 'inner'); // Changed id to id_activity_registry
 		$this->db->where('ar.activity_date <=', $date_limit); // Use the date_limit parameter
 		$this->db->order_by('ar.activity_date');
 
