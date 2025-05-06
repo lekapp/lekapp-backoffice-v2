@@ -3436,7 +3436,7 @@ class Building_sites extends CI_Controller
 
 				//theorical data
 
-				$total_hh_overall = $this->get_total_hh(); // Get the total hh without date limit
+				$total_hh_overall = $this->get_total_hh($building_site_id); // Get the total hh without date limit
 				$twh = $this->get_activity_summary($weeklyData->selectedDateMaxDayPreviousWeek, $building_site_id); // Get the activity summary for the building site
 
 				$cumulative_hh_for_insert = 0; // Initialize a cumulative variable for the inserts
@@ -3493,10 +3493,11 @@ class Building_sites extends CI_Controller
 		}
 	}
 
-	public function get_total_hh()
+	public function get_total_hh($building_site_id)
 	{
 		$this->db->select('SUM(hh) as total_hh');
 		$this->db->from('activity_data');
+		$this->db->where('fk_building_site', $building_site_id);
 		$result = $this->db->get()->row();
 		return ($result && $result->total_hh !== null) ? $result->total_hh : 0;
 	}
@@ -3520,6 +3521,7 @@ class Building_sites extends CI_Controller
 		// Subquery to get the latest registry for each activity up to the date limit.
 		$subquery = $this->db->select('fk_activity, MAX(activity_date) as latest_date')
 			->from('activity_registry')
+			->where('checked !=', null)
 			->where('activity_date <=', $date_limit)
 			->where('fk_building_site', $building_site_id)
 			->group_by('fk_activity')
@@ -3531,6 +3533,7 @@ class Building_sites extends CI_Controller
 		$this->db->join('(' . $subquery . ') AS sub', 'ar.fk_activity = sub.fk_activity AND ar.activity_date = sub.latest_date', 'inner');
 		$this->db->where('ar.activity_date <=', $date_limit);
 		$this->db->where('ar.fk_building_site', $building_site_id);
+		$this->db->where('ar.checked !=', null);
 		$this->db->order_by('ar.activity_date');
 
 		$latest_registries = $this->db->get()->result_array();
