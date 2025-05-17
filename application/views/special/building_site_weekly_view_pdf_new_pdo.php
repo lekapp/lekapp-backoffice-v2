@@ -339,7 +339,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                     <?= $activity->activityTotalRealWorkHoursBeforeCurrentWeek ?>
                                 </td>
                                 <td>
-                                    <?= round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2) > 0 ? $activity->activityTotalRealWorkHoursBeforeCurrentWeek / round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2) : 0 ?>
+                                    <?= round(round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2) > 0 ? $activity->activityTotalRealWorkHoursBeforeCurrentWeek / round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2) : 0, 2) ?>
                                 </td>
 
 
@@ -366,7 +366,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                     <?= $activity->activityTotalRealWorkHoursInCurrentWeek ?>
                                 </td>
                                 <td>
-                                    <?= round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2) > 0 ? $activity->activityTotalRealWorkHoursInCurrentWeek / round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2) : 0 ?>
+                                    <?= round(round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2) > 0 ? $activity->activityTotalRealWorkHoursInCurrentWeek / round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2) : 0, 2) ?>
                                 </td>
 
 
@@ -398,7 +398,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                         $x2 = round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2) > 0 ? $activity->activityTotalRealWorkHoursInCurrentWeek / round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2) : 0;
                                         $x3 = $x1 + $x2;
                                     ?>
-                                    <?= $x3 ?>
+                                    <?= round($x3, 2) ?>
                                 </td>
 
 
