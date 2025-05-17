@@ -736,7 +736,10 @@ class App extends CI_Controller
           $this->db->set('fk_activity', $activityId);
           $this->db->set('fk_building_site', $buildingSiteId);
           $this->db->insert('activity_registry');
+          $ar_id = $this->db->insert_id();
 
+          $hh = 0;
+          $workers = 0;
           foreach($workerActivities as $workerActivity){
 
             $worker = $this->db->select('id')->from('worker')->where('dni', $workerActivity->dni)->get()->row();
@@ -747,7 +750,18 @@ class App extends CI_Controller
             $this->db->set('hh', 9);
             $this->db->set('date', $activityDate);
             $this->db->insert('worker_activity');
+
+            $hh += 9;
+            $workers += 1;
+
           }
+
+          //update activity_registry to set the hh to the sum of the worker activities
+
+          $this->db->set('hh', $hh);
+          $this->db->set('workers', $workers);
+          $this->db->where('id', $ar_id);
+          $this->db->update('activity_registry');
           
         }
 

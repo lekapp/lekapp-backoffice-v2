@@ -2869,6 +2869,26 @@ class Building_sites extends CI_Controller
 			$this->load->view(CPATH . 'foot');
 		}
 	}
+
+	private function filter_latest_activity_records($activity_records)
+	{
+		$latest_records = array();
+		$date_map = array();
+
+		foreach ($activity_records as $record) {
+			$activity_date = $record->activity_date;
+			$record_id = $record->id; // Assuming 'id' is the primary key of activity_registry
+
+			if (!isset($date_map[$activity_date]) || $record_id > $date_map[$activity_date]->id) {
+				$date_map[$activity_date] = $record;
+			}
+		}
+
+		// Reset the indices of the array
+		$latest_records = array_values($date_map);
+		return $latest_records;
+	}
+
 	public function weekly_add_new($building_site_id = 0)
 	{
 		$logged_in = $this->session->userdata('logged_in');
@@ -3204,6 +3224,8 @@ class Building_sites extends CI_Controller
 
 					$activity->activityTotalProgrammedWorkHours = round($activity->activityTotalProgrammedWorkHoursBeforeCurrentWeek + $activity->activityTotalProgrammedWorkHoursInCurrentWeek, 2);
 
+					
+
 					//Real Working Hours (Activity Level)
 
 					$activity->activityTotalRealWorkHoursBeforeCurrentWeek = round(
@@ -3218,7 +3240,8 @@ class Building_sites extends CI_Controller
 
 					$weeklyData->activitiesResume->activityProjectWorkHoursBeforeCurrentWeek += $activity->activityTotalRealWorkHoursBeforeCurrentWeek;
 
-					$activity->activityTotalRealWorkHoursInCurrentWeek = round(
+					$activity->activityTotalRealWorkHoursInCurrentWeek = 
+					round(
 						$this->db->select('SUM(hh) as total')->from('activity_registry')
 							->where('fk_building_site', $building_site_id)
 							->where('fk_activity', $activity->aId)
@@ -3641,7 +3664,6 @@ class Building_sites extends CI_Controller
 				)
 			)
 		);
-		d($data);
 
 		$add_lib = array(
 			'js_lib' => array(
