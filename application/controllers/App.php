@@ -689,6 +689,8 @@ class App extends CI_Controller
           $workerActivities = $registry->workerActivities;
           //workerActivities TODO
 
+          log_message('error', 'WorkerActivities: ' . json_encode($workerActivities));
+
           $imageId = 0;
 
           if (trim($imageBase64 != "")) {
@@ -740,6 +742,7 @@ class App extends CI_Controller
 
           $hh = 0;
           $workers = 0;
+
           foreach($workerActivities as $workerActivity){
 
             $worker = $this->db->select('id')->from('worker')->where('dni', $workerActivity->dni)->get()->row();
