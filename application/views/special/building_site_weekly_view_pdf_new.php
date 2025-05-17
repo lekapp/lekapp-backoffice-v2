@@ -286,7 +286,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                         <tr>
                             <?php
                             $aa = $json_data->projectTotalProgrammedWorkHoursMax > 0 ? round(100 * $json_data->projectTotalProgrammedWorkHoursBeforeCurrentWeek / $json_data->projectTotalProgrammedWorkHoursMax, 2) : 0;
-                            $ab = $json_data->projectTotalRealWorkHours > 0 ? round(100 * $json_data->projectTotalRealWorkHoursBeforeCurrentWeek / $json_data->projectTotalRealWorkHours, 2) : 0;
+                            $ab = round($json_data->projectTotalRealWorkHoursBeforeCurrentWeek, 2);
                             $ac = round($ab - $aa, 2);
                             ?>
                             <td>

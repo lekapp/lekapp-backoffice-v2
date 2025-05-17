@@ -3126,8 +3126,6 @@ class Building_sites extends CI_Controller
 
 				$weeklyData->projectTotalRealWorkHours = 0;
 
-				//$weeklyData->projectTotalRealWorkHours = round($weeklyData->projectTotalRealWorkHoursBeforeCurrentWeek + $weeklyData->projectTotalRealWorkHoursInCurrentWeek, 2);
-
 				foreach ($specialities as $k => $speciality) {
 
 					unset($speciality->building_site);
@@ -3234,7 +3232,7 @@ class Building_sites extends CI_Controller
 						$this->db->select('SUM(hh) as total')->from('activity_registry')
 							->where('fk_building_site', $building_site_id)
 							->where('fk_activity', $activity->aId)
-							->where('activity_date <', $weeklyData->selectedDateMaxDayPreviousWeek)
+							->where('activity_date <', $weeklyData->selectedDateMaxDayCurrentWeek)
 							->where('checked !=', null)
 							->get()->row()->total,
 						2
@@ -3402,11 +3400,14 @@ class Building_sites extends CI_Controller
 				foreach ($activities as $activity) {
 					$aAn2 += round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2);
 					$a2 += round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2);
+
 				}
 
 				$weeklyData->projectTotalRealWorkHoursBeforeCurrentWeek = $aAn2 / $weeklyData->activitiesResume->activityProjectProgrammedWorkHours;
 
 				$weeklyData->projectTotalRealWorkHoursInCurrentWeek = $a2 / $weeklyData->activitiesResume->activityProjectProgrammedWorkHours;
+
+				$weeklyData->projectTotalRealWorkHours = 0;
 
 				foreach ($specialities as $key => $speciality) {
 					$aAn2 = 0;
