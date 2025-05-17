@@ -3281,12 +3281,7 @@ class Building_sites extends CI_Controller
 					);
 
 					echo json_encode(
-						(object) [
-							'activity' => $activity,
-							'q' => $q,
-							'weeklyData' => $weeklyData,
-							'building_site_id' => $building_site_id
-						]
+						$q
 					);
 					exit;
 
