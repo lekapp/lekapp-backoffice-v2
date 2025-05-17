@@ -3271,11 +3271,6 @@ class Building_sites extends CI_Controller
 						->limit(1)
 						->get()->row();
 
-					echo json_encode(
-						$q
-					);
-					exit;
-
 					if (!isset($q->total) || $q->total == null) {
 						$q = 0;
 					} else {
