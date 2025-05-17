@@ -339,7 +339,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                     <?= $activity->activityTotalRealWorkHoursBeforeCurrentWeek ?>
                                 </td>
                                 <td>
-                                    <?= $activity->activityTotalPFBeforeCurrentWeek ?>
+                                    <?= round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2) > 0 ? $activity->activityTotalRealWorkHoursBeforeCurrentWeek / round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2) : 0 ?>
                                 </td>
 
 
@@ -366,7 +366,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                     <?= $activity->activityTotalRealWorkHoursInCurrentWeek ?>
                                 </td>
                                 <td>
-                                    <?= $activity->activityTotalPFInCurrentWeek ?>
+                                    <?= round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2) > 0 ? $activity->activityTotalRealWorkHoursInCurrentWeek / round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2) : 0 ?>
                                 </td>
 
 
@@ -393,7 +393,12 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                                     <?= $activity->activityTotalRealWorkHoursBeforeCurrentWeek + $activity->activityTotalRealWorkHoursInCurrentWeek ?>
                                 </td>
                                 <td>
-                                    <?= $activity->activityTotalPFBeforeCurrentWeek + $activity->activityTotalPFInCurrentWeek ?>
+                                    <?php
+                                        $x1 = round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2) > 0 ? $activity->activityTotalRealWorkHoursBeforeCurrentWeek / round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceBeforeCurrentWeek / 100, 2) : 0;
+                                        $x2 = round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2) > 0 ? $activity->activityTotalRealWorkHoursInCurrentWeek / round($activity->activityProjectProgrammedWorkHours * $activity->activityTotalRealAdvanceInCurrentWeek / 100, 2) : 0;
+                                        $x3 = $x1 + $x2;
+                                    ?>
+                                    <?= $x3 ?>
                                 </td>
 
 
