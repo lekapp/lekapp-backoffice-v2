@@ -3270,6 +3270,12 @@ class Building_sites extends CI_Controller
 						->order_by('activity_date', 'DESC')
 						->limit(1)
 						->get()->row();
+
+					echo json_encode(
+						$q
+					);
+					exit;
+
 					if (!isset($q->total) || $q->total == null) {
 						$q = 0;
 					} else {
@@ -3279,11 +3285,6 @@ class Building_sites extends CI_Controller
 						$q,
 						2
 					);
-
-					echo json_encode(
-						$q
-					);
-					exit;
 
 					$weeklyData->activitiesResume->activityProjectQuantityBeforeCurrentWeek += $activity->activityTotalQuantityBeforeCurrentWeek;
 
