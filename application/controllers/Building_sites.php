@@ -3124,7 +3124,9 @@ class Building_sites extends CI_Controller
 
 				$weeklyData->projectTotalRealWorkHoursInCurrentWeek = 0;
 
-				$weeklyData->projectTotalRealWorkHours = round($weeklyData->projectTotalRealWorkHoursBeforeCurrentWeek + $weeklyData->projectTotalRealWorkHoursInCurrentWeek, 2);
+				$weeklyData->projectTotalRealWorkHours = 0;
+
+				//$weeklyData->projectTotalRealWorkHours = round($weeklyData->projectTotalRealWorkHoursBeforeCurrentWeek + $weeklyData->projectTotalRealWorkHoursInCurrentWeek, 2);
 
 				foreach ($specialities as $k => $speciality) {
 
@@ -3277,6 +3279,16 @@ class Building_sites extends CI_Controller
 						$q,
 						2
 					);
+
+					echo json_encode(
+						(object) [
+							'activity' => $activity,
+							'q' => $q,
+							'weeklyData' => $weeklyData,
+							'building_site_id' => $building_site_id
+						]
+					);
+					exit;
 
 					$weeklyData->activitiesResume->activityProjectQuantityBeforeCurrentWeek += $activity->activityTotalQuantityBeforeCurrentWeek;
 
