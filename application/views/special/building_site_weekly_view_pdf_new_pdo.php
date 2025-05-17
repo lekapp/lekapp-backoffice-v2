@@ -442,7 +442,9 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                             </td>
                             <td>
                                 <strong>
-                                    <?= $json_data->activitiesResume->activityPFBeforeCurrentWeek ?>
+                                    <?=
+                                    round($aAn2 > 0 ? round($json_data->activitiesResume->activityProjectWorkHoursBeforeCurrentWeek / $aAn2, 2) : 0, 2)
+                                    ?>
                                 </strong>
                             </td>
 
@@ -470,7 +472,9 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                             </td>
                             <td>
                                 <strong>
-                                    <?= $json_data->activitiesResume->activityPFInCurrentWeek ?>
+                                    <?= 
+                                    round($a2 > 0 ? round($json_data->activitiesResume->activityProjectWorkHoursInCurrentWeek / $a2, 2) : 0, 2)
+                                    ?>
                                 </strong>
                             </td>
 
@@ -498,7 +502,9 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                             </td>
                             <td>
                                 <strong>
-                                    <?= $json_data->activitiesResume->activityPF ?>
+                                    <?= 
+                                    round($aAc2 > 0 ? round($json_data->activitiesResume->activityProjectWorkHours / $aAc2, 2) : 0, 2)
+                                    ?>
                                 </strong>
                             </td>
                         </tr>
