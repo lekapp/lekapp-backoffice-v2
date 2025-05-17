@@ -3265,7 +3265,7 @@ class Building_sites extends CI_Controller
 					$q = $this->db->select('avance as total')->from('activity_registry')
 						->where('fk_building_site', $building_site_id)
 						->where('fk_activity', $activity->aId)
-						->where('activity_date <', $weeklyData->selectedDateMaxDayPreviousWeek)
+						->where('activity_date <', $weeklyData->selectedDateMaxDayCurrentWeek)
 						->where('checked !=', null)
 						->order_by('activity_date', 'DESC')
 						->limit(1)
