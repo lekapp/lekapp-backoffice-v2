@@ -4694,6 +4694,51 @@ class Building_sites extends CI_Controller
 		redirect('building_sites/list_activities/' . $building_site[0]->id);
 	}
 
+	function min_max_dates($building_site_id = 0)
+	{
+		$this->db->select('activity_date AS a_date');
+		$this->db->from('activity_registry');
+		$this->db->where('fk_building_site', $building_site_id);
+		$this->db->where('activity_date IS NOT NULL'); // Ensure we only consider non-null dates
+		$this->db->where('checked !=', null); // Ensure we only consider checked dates
+		$query1_sql = $this->db->get_compiled_select();
+
+		// Query for activity_data
+		// We use DATE(activity_date_dt) to compare only the date part.
+		// The FALSE argument in select prevents CI from adding backticks around DATE(), which would cause an SQL error.
+		$this->db->select('DATE(activity_date_dt) AS a_date', FALSE);
+		$this->db->from('activity_data');
+		$this->db->where('fk_building_site', $building_site_id);
+		$this->db->where('activity_date_dt IS NOT NULL'); // Ensure we only consider non-null datetimes
+		$query2_sql = $this->db->get_compiled_select();
+
+		// Construct the UNION ALL query string.
+		// UNION ALL is generally more performant than UNION if duplicate removal isn't strictly necessary
+		// before the MIN/MAX aggregation.
+		$union_sql = "($query1_sql) UNION ALL ($query2_sql)";
+
+		// Final query to get MIN and MAX dates from the combined result set
+		$min_max_query = $this->db
+			->select('MIN(all_dates.a_date) as min_overall_date, MAX(all_dates.a_date) as max_overall_date')
+			->from("($union_sql) AS all_dates") // Use the UNIONed query as a subquery
+			->get();
+
+		$dates_result = $min_max_query->row();
+
+		$min_overall_date = null;
+		$max_overall_date = null;
+
+		if ($dates_result) {
+			$min_overall_date = $dates_result->min_overall_date;
+			$max_overall_date = $dates_result->max_overall_date;
+		}
+
+		return [
+			'min_date' => $min_overall_date,
+			'max_date' => $max_overall_date
+		];
+	}
+
 	public function reverse_report_activity($building_site_id = 0)
 	{
 		$this->load->model('user');
@@ -4706,262 +4751,13 @@ class Building_sites extends CI_Controller
 		$this->load->model('activity_registry');
 		$this->load->model('activity_data');
 		$this->load->model('daily_report');
-		$tpa = 0;
+		$this->load->database();
+
 		$spreadsheet = new Spreadsheet();
 		$sheet = $spreadsheet->getActiveSheet();
-		$row = 1;
-		$activity_items = $this->activity->obtener(
-			[
-				[
-					'fk_building_site' => $building_site_id
-				]
-			]
-		);
-		$registryDateCells = [];
-		$registry = [];
-		$min_rec = 0;
-		$max_rec = 0;
-		foreach ($activity_items as $activity) {
-			$t = $this->activity_registry->obtener([
-				[
-					'fk_building_site' => $building_site_id,
-					'fk_activity' => $activity->id
-				]
-			]);
-			if (sizeof($t) > 0) {
-				$registry[$activity->activity_code][$t[0]->speciality->id][$t[0]->speciality_role->id] = $t;
-				foreach ($t as $record) {
-					if ($min_rec == 0 || $min_rec > strtotime($record->activity_date)) {
-						$min_rec = strtotime($record->activity_date);
-					}
-					if ($max_rec == $min_rec || $max_rec < strtotime($record->activity_date)) {
-						$max_rec = strtotime($record->activity_date);
-					}
-				}
-			}
-		}
-		$activity_data = $this->activity_data->obtener(
-			[
-				[
-					'fk_building_site' => $building_site_id
-				]
-			]
-		);
-		$dataDateCells = [];
-		foreach ($activity_data as $ad) {
-			if (!array_search(gmdate("Ymd", $ad->activity_date * 86400), $dataDateCells) !== false) {
-				$dataDateCells[] = gmdate("Ymd", $ad->activity_date * 86400);
-				if ($min_rec == 0 || $min_rec > $ad->activity_date * 86400) {
-					$min_rec = $ad->activity_date * 86400;
-				}
-				if ($max_rec == $min_rec || $max_rec < $ad->activity_date * 86400) {
-					$max_rec = $ad->activity_date * 86400;
-				}
-			}
-		}
-		for ($i = $min_rec; $i <= $max_rec; $i += 86400) {
-			$registryDateCells[] = gmdate("Ymd", $i);
-		}
-		$dataDateCells = array_merge($dataDateCells, $registryDateCells);
-		sort($dataDateCells, SORT_NUMERIC);
-		$dataDateCells = array_unique($dataDateCells);
-		$dataDateCells = array_values($dataDateCells);
-		$i = 0;
-		foreach ($dataDateCells as $k => $date) {
-			$sheet->setCellValueByColumnAndRow($i + 17, 1, substr($date, 6, 2) . '-' . substr($date, 4, 2) . '-' . substr($date, 0, 4));
-			$i++;
-			if ($i % 7 == 0) {
-				$sheet->setCellValueByColumnAndRow($i + 17, 1, "% Avance semana");
-				$i++;
-			}
-		}
-		if ($i % 7 != 0) {
-			$sheet->setCellValueByColumnAndRow($i + 17, 1, "% Avance semana");
-		}
-		$cat_ad = [];
-		foreach ($activity_data as $ad) {
-			if (!isset($cat_ad[$ad->activity->activity_code])) {
-				$cat_ad[$ad->activity->activity_code] = [];
-			}
-			if (!isset($cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality])) {
-				$cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality] = [];
-			}
-			if (!isset($cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality][$ad->activity->fk_speciality_role])) {
-				$cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality][$ad->activity->fk_speciality_role] = [];
-			}
-			$cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality][$ad->activity->fk_speciality_role][] = $ad;
-		}
-		$C = "Q"; // define la columna donde empieza la fecha
-		foreach ($cat_ad as $a) {
-			$row++;
-			$n = $a;
-			sort($n);
-			sort($n[0]);
-			sort($n[0][0]);
-			sort($n[0][0][0]);
-			$n = $n[0][0][0]->activity;
-			$titles = [
-				$n->zone->name,
-				"",
-				$n->speciality->name,
-				"",
-				$n->activity_code,
-				"",
-				$n->name,
-				"",
-				$n->unt,
-				$n->qty,
-				$n->eff,
-			];
-			$spreadsheet->getActiveSheet()
-				->fromArray(
-					$titles,
-					NULL,
-					"A{$row}"
-				)
-				->setCellValueExplicit(
-					"E{$row}",
-					$n->activity_code,
-					\PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
-				);
-			$row++;
-			foreach ($a as $s) {
-				$p_avance = [];
-				$p_machinery = [];
-				$p_comment = [];
-				$roles = 0;
-				$t_row = $row;
-				$x = 0;
-				foreach ($s as $k => $r) {
-					$first = false;
-					$first_column = 18;
-					$sheet->getCell("H{$t_row}")->setValue($r[0]->speciality_role->name);
-					$p_avance[$x] = [];
-					foreach ($r as $d) {
-						$p_avance[$x][gmdate("Ymd", $d->activity_date * 86400)] = floatval($d->p_avance);
-						$tpa += $d->p_avance;
-						if ($first == false) {
-							if ($d->p_avance != 0)
-								$first = true;
-							else {
-								$first_column++;
-							}
-						}
-					}
-					foreach ($dataDateCells as $date) {
-						if (!isset($p_avance[$x][$date])) {
-							$p_avance[$x][$date] = 0;
-						}
-					}
-					ksort($p_avance[$x], SORT_NUMERIC);
-					$t_row++;
-					$x++;
-					$sheet->getCell("G{$t_row}")->setValue("AVANCE DESCRITO EN TERRENO");
-					$t_row++;
-					foreach ($dataDateCells as $date) {
-						if (!isset($p_avance[$x][$date])) {
-							$p_avance[$x][$date] = 0;
-						}
-						foreach ($r as $data) {
-							if (isset($registry[$data->activity->activity_code][$data->fk_speciality][$data->fk_speciality_role])) {
-								foreach ($registry[$data->activity->activity_code][$data->fk_speciality][$data->fk_speciality_role] as $round) {
-									if ($date == str_replace("-", "", $round->activity_date)) {
-										$p_avance[$x][$date] = $round->p_avance;
-										$p_machinery[$x][$date] = $round->machinery;
-										$p_comment[$x][$date] = $round->comment;
-									}
-								}
-							}
-						}
-					}
-					$x++;
-					$roles++;
-					$roles++;
-					$roles++;
-				}
-				$sh = [];
-				/**
-				 * ricardo.munoz
-				 * arregla problema con arreglos de 2 dimensiones
-				 * se selecciona el arreglo que contenga "numeros" 
-				 */
-				$key_cero = 0;
-				foreach ($p_avance as $key_value => $value) {
-					$i = 0;
-					$sum = 0;
-					$nr = [];
-					foreach ($value as $v) {
-						if (is_string($v) && 0 <> (float) $v)
-							$key_cero = $key_value;
-						$nr[] = $v;
-						$i++;
-						if ($i % 7 == 0) {
-							$nr[] = NULL;
-							$i++;
-						}
-					}
-					$sh[] = $nr;
-				}
-				$sh = $sh[$key_cero];
-				$spreadsheet->getActiveSheet()
-					->fromArray(
-						$sh,
-						0,
-						$C . $row,
-						TRUE,
-						TRUE
-					);
-				$sh_machinery = [];
-				$row++;
-				foreach ($p_machinery as $value) {
-					$i = 0;
-					$sum = 0;
-					$nr_machinery = [];
-					foreach ($value as $v) {
-						$nr_machinery[] = $v;
-						$i++;
-						if ($i % 7 == 0) {
-							$nr_machinery[] = NULL;
-							$i++;
-						}
-					}
-					$sh_machinery[] = $nr_machinery;
-				}
-				$spreadsheet->getActiveSheet()
-					->fromArray(
-						$sh_machinery,
-						0,
-						$C . $row,
-						TRUE
-					);
-				$sh_comment = [];
-				$row++;
-				foreach ($p_comment as $value) {
-					$i = 0;
-					$sum = 0;
-					$nr_comment = [];
-					foreach ($value as $v) {
-						$nr_comment[] = $v;
-						$i++;
-						if ($i % 7 == 0) {
-							$nr_comment[] = NULL;
-							$i++;
-						}
-					}
-					$sh_comment[] = $nr_comment;
-				}
-				$spreadsheet->getActiveSheet()
-					->fromArray(
-						$sh_comment,
-						0,
-						$C . $row,
-						TRUE
-					);
-				$row += $roles;
-			}
-		}
-		$row = 1;
-		$titles = [
+		$activities = $this->db->select('*')->from('activity')->where('fk_building_site', $building_site_id)->get()->result();
+
+		$spreadsheetTitles = [
 			"Área",
 			"Sub-area",
 			"Especialidad",
@@ -4979,12 +4775,243 @@ class Building_sites extends CI_Controller
 			"Comienzo Programado",
 			"Fin Programado",
 		];
+
+		$minAndMaxDates = $this->min_max_dates($building_site_id);
+
+		$minDate = $minAndMaxDates['min_date'];
+		$maxDate = $minAndMaxDates['max_date'];
+
+		//range of dates between minDate (inclusive) and maxDate (inclusive) 
+
+		$dates = [];
+		if ($minDate && $maxDate) {
+			$start = new DateTime($minDate);
+			$end = new DateTime($maxDate);
+			$end->modify('+1 day'); // Include the end date
+			$interval = new DateInterval('P1D');
+			$dateRange = new DatePeriod($start, $interval, $end);
+
+			foreach ($dateRange as $date) {
+				$dates[] = $date->format("Y-m-d");
+			}
+		}
+
+		//append the dates to the titles
+
+		$spreadsheetTitles = array_merge($spreadsheetTitles, $dates);
+
 		$spreadsheet->getActiveSheet()
 			->fromArray(
-				$titles,
+				$spreadsheetTitles,
 				NULL,
 				"A1"
 			);
+
+		$mainMatrix = [];
+		$zones = $this->db->select('*')->from('zone')->where('fk_building_site', $building_site_id)->get()->result();
+		//set name as value, and id as key
+		$zonesName = array_column($zones, 'name', 'id');
+		$zonesArea = array_column($zones, 'fk_area', 'id');
+
+		$areas = $this->db->select('*')->from('area')->where('fk_building_site', $building_site_id)->get()->result();
+		//set name as value, and id as key
+		$areas = array_column($areas, 'name', 'id');
+
+		$specialities = $this->db->select('*')->from('speciality')->where('fk_building_site', $building_site_id)->get()->result();
+		//set name as value, and id as key
+		$specialities = array_column($specialities, 'name', 'id');
+
+		$specialityRoles = $this->db->select('*')->from('speciality_role')->where('fk_building_site', $building_site_id)->get()->result();
+		//set name as value, and id as key
+		$specialityRoles = array_column($specialityRoles, 'name', 'id');
+
+		$activityData = $this->db->select('*')->from('activity_data')->where('fk_building_site', $building_site_id)->get()->result();
+		$activityRegistry = $this->db->select('*')->from('activity_registry')->where('fk_building_site', $building_site_id)->where('checked !=', null)->get()->result();
+
+		$supervisors = $this->db
+			->select('supervisor.id as sId, speciality.name as sName, speciality.id as spId, user.first_name as ufName, user.last_name as ulName')->from('supervisor')
+			->join('user', 'user.id = supervisor.fk_user')
+			->join('speciality', 'speciality.id = supervisor.fk_speciality')
+			->where('fk_building_site', $building_site_id)
+			->get()->result();
+
+		//$mainMatrix is the content that will be below the titles in the spreadsheet
+
+		//we will start from row 2, because row 1 is the titles
+
+		$row = 2;
+
+		/*
+		I will use the function 
+
+		$spreadsheet->getActiveSheet()
+			->fromArray(
+				ARRAY,
+				NULL,
+				"A{$row}"
+			);
+
+			to fill the data. let's construct the data in a matrix, and then fill it in the spreadsheet
+		*/
+
+		foreach ($activities as $activity) {
+			//to fill subArea, find the zones item which item.id is $activity->fk_zone
+			$subArea = $zonesName[$activity->fk_zone];
+			$area = $areas[$zonesArea[$activity->fk_zone]];
+			$speciality = $specialities[$activity->fk_speciality];
+			//supervisor could be more than one, we will append them to a string separated by commas
+			$supervisor = '';
+
+			foreach ($supervisors as $s) {
+				if ($s->spId == $activity->fk_speciality) {
+					$supervisor .= $s->ufName . ' ' . $s->ulName . ', ';
+				}
+			}
+
+			//remove the last comma and space
+			$supervisor = rtrim($supervisor, ', ');
+			//if there is no supervisor, set it to 'N/A'
+
+			$specialityRole = $specialityRoles[$activity->fk_speciality_role];
+			$activityCode = $activity->activity_code;
+			$activityName = $activity->name;
+			$activityDescription = '';
+			$activityUnit = $activity->unt;
+			$activityQty = $activity->qty;
+			$activityEff = $activity->eff;
+
+			//activityStart and activityEnd are rescued from activityData->activity_date_dt (min and max respectively)
+
+			$start = $this->db
+				->select('MIN(activity_date_dt) as start')
+				->from('activity_data')
+				->where('fk_building_site', $building_site_id)
+				->where('fk_activity', $activity->id)
+				->get()
+				->row();
+
+			$end = $this->db
+				->select('MAX(activity_date_dt) as end')
+				->from('activity_data')
+				->where('fk_building_site', $building_site_id)
+				->where('fk_activity', $activity->id)
+				->get()
+				->row();
+
+			$activityStart = $start->start;
+			$activityEnd = $end->end;
+
+			$activityStart = date('Y-m-d', strtotime($activityStart));
+			$activityEnd = date('Y-m-d', strtotime($activityEnd));
+
+			$duration = (strtotime($activityEnd) - strtotime($activityStart)) / (60 * 60 * 24);
+			if ($duration == 0) {
+				$duration = "0";
+			}
+
+			$mainMatrix[$row] = [
+				$area,
+				$subArea,
+				$speciality,
+				$supervisor,
+				$activityCode,
+				$activityName,
+				$activityDescription,
+				$specialityRole,
+				$activityUnit,
+				$activityQty,
+				$activityEff,
+				0, //Nº Trabajadores
+				0, //Trabajo
+				$duration, //Duracion
+				$activityStart, //Comienzo Programado
+				$activityEnd //Fin Programado
+			];
+
+			//export the spreadsheet
+
+			$row++;
+		}
+
+		$spreadsheet->getActiveSheet()
+			->fromArray(
+				$mainMatrix,
+				NULL,
+				"A2"
+			);
+
+		$secondaryMatrix = [];
+
+		//now we will fill the dates, and the data from activityRegistry (hh) which should be mapped to the dates in the appended titles.
+		//take in mind the base starting cell of data is Q2
+
+		$baseCell = 'Q2';
+		$baseRow = 1;
+
+		foreach ($activities as $activity) {
+			foreach ($dates as $date_key => $date) {
+				$activityRegistry = $this->db
+					->select('*')
+					->from('activity_registry')
+					->where('fk_building_site', $building_site_id)
+					->where('fk_activity', $activity->id)
+					->where('activity_date', $date)
+					->where('checked !=', null)
+					->order_by('id', 'DESC')
+					->limit(1)
+					->get()
+					->row();
+
+				if ($activityRegistry) {
+					if ($activityRegistry->hh > 0)
+						$secondaryMatrix[$baseRow][$date_key] = $activityRegistry->p_avance;
+					else
+						$secondaryMatrix[$baseRow][$date_key] = 0;
+					$mainMatrix[($baseRow + 1)][11] += (float)$activityRegistry->hh;
+					$mainMatrix[($baseRow + 1)][12] += (int)$activityRegistry->workers;
+				} else {
+					$secondaryMatrix[$baseRow][$date_key] = 0;
+				}
+			}
+			$baseRow++;
+		}
+
+		$spreadsheet->getActiveSheet()
+			->fromArray(
+				$mainMatrix,
+				NULL,
+				"A2"
+			);
+
+
+		//d($secondaryMatrix);
+
+		//exit;
+
+		$spreadsheet->getActiveSheet()
+			->fromArray(
+				$secondaryMatrix,
+				NULL,
+				"Q2"
+			);
+
+		$spreadsheet->getActiveSheet()->getStyle('A1:P1')->getFont()->setBold(true);
+		$spreadsheet->getActiveSheet()->getStyle('A1:P1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+		$spreadsheet->getActiveSheet()->getStyle('A1:P1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+		// Set the width of the columns from column A to the last column with data
+
+		//first column by index 
+		$firstColumn = 1;
+		//last column by index
+		$lastColumn = $spreadsheet->getActiveSheet()->getHighestColumn();
+
+		$lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($lastColumn);
+
+		foreach (range($firstColumn, $lastColumn) as $columnIndex) {
+			$spreadsheet->getActiveSheet()->getColumnDimensionByColumn($columnIndex)->setAutoSize(true);
+		}
+
 		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 		header('Content-Disposition: attachment;filename="Planilla Avances.xlsx"');
 		header('Cache-Control: max-age=0');
@@ -5221,8 +5248,8 @@ class Building_sites extends CI_Controller
 						$secondaryMatrix[$baseRow][$date_key] = $activityRegistry->hh;
 					else
 						$secondaryMatrix[$baseRow][$date_key] = 0;
-					$mainMatrix[($baseRow+1)][11] += (float)$activityRegistry->hh;
-					$mainMatrix[($baseRow+1)][12] += (int)$activityRegistry->workers;
+					$mainMatrix[($baseRow + 1)][11] += (float)$activityRegistry->hh;
+					$mainMatrix[($baseRow + 1)][12] += (int)$activityRegistry->workers;
 				} else {
 					$secondaryMatrix[$baseRow][$date_key] = 0;
 				}
@@ -5230,14 +5257,14 @@ class Building_sites extends CI_Controller
 			$baseRow++;
 		}
 
-		
+
 		$spreadsheet->getActiveSheet()
 			->fromArray(
 				$mainMatrix,
 				NULL,
 				"A2"
 			);
-			
+
 
 		//d($secondaryMatrix);
 
@@ -5275,302 +5302,6 @@ class Building_sites extends CI_Controller
 		exit;
 	}
 
-	function min_max_dates($building_site_id = 0)
-	{
-		$this->db->select('activity_date AS a_date');
-		$this->db->from('activity_registry');
-		$this->db->where('fk_building_site', $building_site_id);
-		$this->db->where('activity_date IS NOT NULL'); // Ensure we only consider non-null dates
-		$this->db->where('checked !=', null); // Ensure we only consider checked dates
-		$query1_sql = $this->db->get_compiled_select();
-
-		// Query for activity_data
-		// We use DATE(activity_date_dt) to compare only the date part.
-		// The FALSE argument in select prevents CI from adding backticks around DATE(), which would cause an SQL error.
-		$this->db->select('DATE(activity_date_dt) AS a_date', FALSE);
-		$this->db->from('activity_data');
-		$this->db->where('fk_building_site', $building_site_id);
-		$this->db->where('activity_date_dt IS NOT NULL'); // Ensure we only consider non-null datetimes
-		$query2_sql = $this->db->get_compiled_select();
-
-		// Construct the UNION ALL query string.
-		// UNION ALL is generally more performant than UNION if duplicate removal isn't strictly necessary
-		// before the MIN/MAX aggregation.
-		$union_sql = "($query1_sql) UNION ALL ($query2_sql)";
-
-		// Final query to get MIN and MAX dates from the combined result set
-		$min_max_query = $this->db
-			->select('MIN(all_dates.a_date) as min_overall_date, MAX(all_dates.a_date) as max_overall_date')
-			->from("($union_sql) AS all_dates") // Use the UNIONed query as a subquery
-			->get();
-
-		$dates_result = $min_max_query->row();
-
-		$min_overall_date = null;
-		$max_overall_date = null;
-
-		if ($dates_result) {
-			$min_overall_date = $dates_result->min_overall_date;
-			$max_overall_date = $dates_result->max_overall_date;
-		}
-
-		return [
-			'min_date' => $min_overall_date,
-			'max_date' => $max_overall_date
-		];
-	}
-
-	public function reverse_report_activity_hh2($building_site_id = 0)
-	{
-		$this->load->model('user');
-		$this->load->model('role');
-		$this->load->model('zone');
-		$this->load->model('building_site');
-		$this->load->model('speciality');
-		$this->load->model('speciality_role');
-		$this->load->model('activity');
-		$this->load->model('activity_registry');
-		$this->load->model('activity_data');
-		$this->load->model('daily_report');
-		$tpa = 0;
-		$spreadsheet = new Spreadsheet();
-		$sheet = $spreadsheet->getActiveSheet();
-		$row = 1;
-		$activity_items = $this->activity->obtener(
-			[
-				[
-					'fk_building_site' => $building_site_id
-				]
-			]
-		);
-		$registry = [];
-		$registryDateCells = [];
-		$min_rec = 0;
-		$max_rec = 0;
-		foreach ($activity_items as $activity) {
-			$t = $this->activity_registry->obtener([
-				[
-					'fk_building_site' => $building_site_id,
-					'fk_activity' => $activity->id
-				]
-			]);
-			if (sizeof($t) > 0) {
-				$registry[$activity->activity_code][$t[0]->speciality->id][$t[0]->speciality_role->id] = $t;
-				foreach ($t as $record) {
-					if ($min_rec == 0 || $min_rec > strtotime($record->activity_date)) {
-						$min_rec = strtotime($record->activity_date);
-					}
-					if ($max_rec == $min_rec || $max_rec < strtotime($record->activity_date)) {
-						$max_rec = strtotime($record->activity_date);
-					}
-				}
-			}
-		}
-		$activity_data = $this->activity_data->obtener(
-			[
-				[
-					'fk_building_site' => $building_site_id
-				]
-			]
-		);
-		$dataDateCells = [];
-		foreach ($activity_data as $ad) {
-			if (!array_search(gmdate("Ymd", $ad->activity_date * 86400), $dataDateCells) !== false) {
-				$dataDateCells[] = gmdate("Ymd", $ad->activity_date * 86400);
-				if ($min_rec == 0 || $min_rec > $ad->activity_date * 86400) {
-					$min_rec = $ad->activity_date * 86400;
-				}
-				if ($max_rec == $min_rec || $max_rec < $ad->activity_date * 86400) {
-					$max_rec = $ad->activity_date * 86400;
-				}
-			}
-		}
-		for ($i = $min_rec; $i <= $max_rec; $i += 86400) {
-			$registryDateCells[] = gmdate("Ymd", $i);
-		}
-		$dataDateCells = array_merge($dataDateCells, $registryDateCells);
-		sort($dataDateCells, SORT_NUMERIC);
-		$dataDateCells = array_unique($dataDateCells);
-		$dataDateCells = array_values($dataDateCells);
-		$i = 0;
-		foreach ($dataDateCells as $k => $date) {
-			$sheet->setCellValueByColumnAndRow($i + 17, 1, substr($date, 6, 2) . '-' . substr($date, 4, 2) . '-' . substr($date, 0, 4));
-			$i++;
-		}
-		$cat_ad = [];
-		foreach ($activity_data as $ad) {
-			if (!isset($cat_ad[$ad->activity->activity_code])) {
-				$cat_ad[$ad->activity->activity_code] = [];
-			}
-			if (!isset($cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality])) {
-				$cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality] = [];
-			}
-			if (!isset($cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality][$ad->activity->fk_speciality_role])) {
-				$cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality][$ad->activity->fk_speciality_role] = [];
-			}
-			$cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality][$ad->activity->fk_speciality_role][] = $ad;
-		}
-		$C = "Q"; // define la columna donde empieza la fecha
-		foreach ($cat_ad as $a) {
-			$row++;
-			$n = $a;
-			sort($n);
-			sort($n[0]);
-			sort($n[0][0]);
-			sort($n[0][0][0]);
-			$n = $n[0][0][0]->activity;
-			$titles = [
-				$n->zone->name,
-				"",
-				$n->speciality->name,
-				"",
-				$n->activity_code,
-				"",
-				$n->name,
-				"",
-				$n->unt,
-				$n->qty,
-				$n->eff,
-			];
-			$spreadsheet->getActiveSheet()
-				->fromArray(
-					$titles,
-					NULL,
-					"A{$row}"
-				)
-				->setCellValueExplicit(
-					"E{$row}",
-					$n->activity_code,
-					\PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
-				);
-			//$row++;
-			foreach ($a as $s) {
-				$p_avance = [];
-				$p_machinery = [];
-				$p_comment = [];
-				$roles = 0;
-				$t_row = $row;
-				$x = 0;
-				foreach ($s as $k => $r) {
-					$first = false;
-					$first_column = 18;
-					$sheet->getCell("H{$t_row}")->setValue($r[0]->speciality_role->name);
-					$p_avance[$x] = [];
-					foreach ($r as $d) {
-						$p_avance[$x][gmdate("Ymd", $d->activity_date * 86400)] = floatval($d->p_avance);
-						$p_machinery[$x][gmdate("Ymd", $d->activity_date * 86400)] = $d->machinery;
-						$p_comment[$x][gmdate("Ymd", $d->activity_date * 86400)] = $d->comment;
-						$tpa += $d->p_avance;
-						if ($first == false) {
-							if ($d->p_avance != 0)
-								$first = true;
-							else {
-								$first_column++;
-							}
-						}
-					}
-					foreach ($dataDateCells as $date) {
-						if (!isset($p_avance[$x][$date])) {
-							$p_avance[$x][$date] = 0;
-						}
-						if (!isset($p_avance[$x][$date])) {
-							$p_machinery[$x][$date] = '';
-						}
-						if (!isset($p_avance[$x][$date])) {
-							$p_comment[$x][$date] = '';
-						}
-					}
-					ksort($p_avance[$x], SORT_NUMERIC);
-					ksort($p_machinery[$x], SORT_NUMERIC);
-					ksort($p_comment[$x], SORT_NUMERIC);
-
-					$x++;
-
-					foreach ($dataDateCells as $date) {
-						if (!isset($p_avance[$x][$date])) {
-							$p_avance[$x][$date] = 0;
-						}
-						if (!isset($p_machinery[$x][$date])) {
-							$p_machinery[$x][$date] = '';
-						}
-						if (!isset($p_comment[$x][$date])) {
-							$p_comment[$x][$date] = '';
-						}
-						foreach ($r as $data) {
-							if (isset($registry[$data->activity->activity_code][$data->fk_speciality][$data->fk_speciality_role])) {
-								foreach ($registry[$data->activity->activity_code][$data->fk_speciality][$data->fk_speciality_role] as $round) {
-									if ($date == str_replace("-", "", $round->activity_date)) {
-										$p_avance[$x][$date] = $round->p_avance;
-										$p_machinery[$x][$date] = $round->machinery;
-										$p_comment[$x][$date] = $round->comment;
-									}
-								}
-							}
-						}
-					}
-					$x++;
-				}
-				$sh = [];
-
-				$key_cero = 0;
-				foreach ($p_avance as $key_value => $value) {
-					$i = 0;
-					$sum = 0;
-					$nr = [];
-					foreach ($value as $v) {
-						if (is_string($v) && 0 <> (float) $v)
-							$key_cero = $key_value;
-						$nr[] = $v;
-						$i++;
-					}
-					$sh[] = $nr;
-				}
-				$sh = $sh[$key_cero];
-				$spreadsheet->getActiveSheet()
-					->fromArray(
-						$sh,
-						0,
-						$C . $row,
-						TRUE,
-						TRUE
-					);
-
-				$row += $roles;
-			}
-		}
-		$row = 1;
-		$titles = [
-			"Área",
-			"Sub-area",
-			"Especialidad",
-			"Supervisor",
-			"Item",
-			"Descripción",
-			"Descripción2",
-			"Rol de especialidad",
-			"Unid",
-			"Cant",
-			"Rend",
-			"Nº Trabajadores",
-			"Trabajo",
-			"Duracion",
-			"Comienzo Programado",
-			"Fin Programado",
-		];
-		$spreadsheet->getActiveSheet()
-			->fromArray(
-				$titles,
-				NULL,
-				"A1"
-			);
-		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-		header('Content-Disposition: attachment;filename="Planilla Avances HH.xlsx"');
-		header('Cache-Control: max-age=0');
-		$writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
-		$writer->save('php://output');
-		exit;
-	}
-
 	public function reverse_report_activity_machinery($building_site_id = 0)
 	{
 		$this->load->model('user');
@@ -5583,269 +5314,13 @@ class Building_sites extends CI_Controller
 		$this->load->model('activity_registry');
 		$this->load->model('activity_data');
 		$this->load->model('daily_report');
-		$tpa = 0;
+		$this->load->database();
+
 		$spreadsheet = new Spreadsheet();
 		$sheet = $spreadsheet->getActiveSheet();
-		$row = 1;
-		$activity_items = $this->activity->obtener(
-			[
-				[
-					'fk_building_site' => $building_site_id
-				]
-			]
-		);
-		$registry = [];
-		$registryDateCells = [];
-		$min_rec = 0;
-		$max_rec = 0;
-		foreach ($activity_items as $activity) {
-			$t = $this->activity_registry->obtener([
-				[
-					'fk_building_site' => $building_site_id,
-					'fk_activity' => $activity->id
-				]
-			]);
-			if (sizeof($t) > 0) {
-				$registry[$activity->activity_code][$t[0]->speciality->id][$t[0]->speciality_role->id] = $t;
-				foreach ($t as $record) {
-					if ($min_rec == 0 || $min_rec > strtotime($record->activity_date)) {
-						$min_rec = strtotime($record->activity_date);
-					}
-					if ($max_rec == $min_rec || $max_rec < strtotime($record->activity_date)) {
-						$max_rec = strtotime($record->activity_date);
-					}
-				}
-			}
-		}
-		$activity_data = $this->activity_data->obtener(
-			[
-				[
-					'fk_building_site' => $building_site_id
-				]
-			]
-		);
-		$dataDateCells = [];
-		foreach ($activity_data as $ad) {
-			if (!array_search(gmdate("Ymd", $ad->activity_date * 86400), $dataDateCells) !== false) {
-				$dataDateCells[] = gmdate("Ymd", $ad->activity_date * 86400);
-				if ($min_rec == 0 || $min_rec > $ad->activity_date * 86400) {
-					$min_rec = $ad->activity_date * 86400;
-				}
-				if ($max_rec == $min_rec || $max_rec < $ad->activity_date * 86400) {
-					$max_rec = $ad->activity_date * 86400;
-				}
-			}
-		}
-		for ($i = $min_rec; $i <= $max_rec; $i += 86400) {
-			$registryDateCells[] = gmdate("Ymd", $i);
-		}
-		$dataDateCells = array_merge($dataDateCells, $registryDateCells);
-		sort($dataDateCells, SORT_NUMERIC);
-		$dataDateCells = array_unique($dataDateCells);
-		$dataDateCells = array_values($dataDateCells);
-		$i = 0;
-		foreach ($dataDateCells as $k => $date) {
-			$sheet->setCellValueByColumnAndRow($i + 17, 1, substr($date, 6, 2) . '-' . substr($date, 4, 2) . '-' . substr($date, 0, 4));
-			$i++;
-		}
-		$cat_ad = [];
-		foreach ($activity_data as $ad) {
-			if (!isset($cat_ad[$ad->activity->activity_code])) {
-				$cat_ad[$ad->activity->activity_code] = [];
-			}
-			if (!isset($cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality])) {
-				$cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality] = [];
-			}
-			if (!isset($cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality][$ad->activity->fk_speciality_role])) {
-				$cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality][$ad->activity->fk_speciality_role] = [];
-			}
-			$cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality][$ad->activity->fk_speciality_role][] = $ad;
-		}
-		$C = "Q"; // define la columna donde empieza la fecha
-		foreach ($cat_ad as $a) {
-			$row++;
-			$n = $a;
-			sort($n);
-			sort($n[0]);
-			sort($n[0][0]);
-			sort($n[0][0][0]);
-			$n = $n[0][0][0]->activity;
-			$titles = [
-				$n->zone->name,
-				"",
-				$n->speciality->name,
-				"",
-				$n->activity_code,
-				"",
-				$n->name,
-				"",
-				$n->unt,
-				$n->qty,
-				$n->eff,
-			];
-			$spreadsheet->getActiveSheet()
-				->fromArray(
-					$titles,
-					NULL,
-					"A{$row}"
-				)
-				->setCellValueExplicit(
-					"E{$row}",
-					$n->activity_code,
-					\PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
-				);
-			//$row++;
-			foreach ($a as $s) {
-				$p_avance = [];
-				$p_machinery = [];
-				$p_comment = [];
-				$roles = 0;
-				$t_row = $row;
-				$x = 0;
-				foreach ($s as $k => $r) {
-					$first = false;
-					$first_column = 18;
-					$sheet->getCell("H{$t_row}")->setValue($r[0]->speciality_role->name);
-					$p_avance[$x] = [];
-					foreach ($r as $d) {
-						$p_avance[$x][gmdate("Ymd", $d->activity_date * 86400)] = floatval($d->p_avance);
-						$p_machinery[$x][gmdate("Ymd", $d->activity_date * 86400)] = $d->machinery;
-						$p_comment[$x][gmdate("Ymd", $d->activity_date * 86400)] = $d->comment;
-						$tpa += $d->p_avance;
-						if ($first == false) {
-							if ($d->p_avance != 0)
-								$first = true;
-							else {
-								$first_column++;
-							}
-						}
-					}
-					foreach ($dataDateCells as $date) {
-						if (!isset($p_avance[$x][$date])) {
-							$p_avance[$x][$date] = '';
-						}
-						if (!isset($p_machinery[$x][$date])) {
-							$p_machinery[$x][$date] = '';
-						}
-						if (!isset($p_comment[$x][$date])) {
-							$p_comment[$x][$date] = '';
-						}
-					}
-					ksort($p_avance[$x], SORT_NUMERIC);
-					ksort($p_machinery[$x], SORT_NUMERIC);
-					ksort($p_comment[$x], SORT_NUMERIC);
-					//$t_row++;
-					$x++;
-					//$sheet->getCell("G{$t_row}")->setValue("AVANCE DESCRITO EN TERRENO");
-					//$t_row++;
-					foreach ($dataDateCells as $date) {
-						if (!isset($p_avance[$x][$date])) {
-							$p_avance[$x][$date] = '';
-						}
-						if (!isset($p_machinery[$x][$date])) {
-							$p_machinery[$x][$date] = '';
-						}
-						if (!isset($p_comment[$x][$date])) {
-							$p_comment[$x][$date] = '';
-						}
-						foreach ($r as $data) {
-							if (isset($registry[$data->activity->activity_code][$data->fk_speciality][$data->fk_speciality_role])) {
-								foreach ($registry[$data->activity->activity_code][$data->fk_speciality][$data->fk_speciality_role] as $round) {
-									if ($date == str_replace("-", "", $round->activity_date)) {
-										$p_avance[$x][$date] = $round->p_avance;
-										$p_machinery[$x][$date] = $round->machinery;
-										$p_comment[$x][$date] = $round->comment;
-									}
-								}
-							}
-						}
-					}
-					$x++;
-					//$roles++;
-					//$roles++;
-					//$roles++;
-				}
+		$activities = $this->db->select('*')->from('activity')->where('fk_building_site', $building_site_id)->get()->result();
 
-				$sh = [];
-				/**
-				 * ricardo.munoz
-				 * arregla problema con arreglos de 2 dimensiones
-				 * se selecciona el arreglo que contenga "numeros" 
-				 */
-
-				/*
-																																																																																																																																								$key_cero = 0;
-																																																																																																																																								foreach ($p_avance as $key_value => $value) {
-																																																																																																																																									$i = 0;
-																																																																																																																																									$sum = 0;
-																																																																																																																																									$nr = [];
-																																																																																																																																									foreach ($value as $v) {
-																																																																																																																																										if (is_string($v) && 0 <> (float)$v)
-																																																																																																																																											$key_cero = $key_value;
-																																																																																																																																										$nr[] = $v;
-																																																																																																																																										$i++;
-																																																																																																																																									}
-																																																																																																																																									$sh[] = $nr;
-																																																																																																																																								}
-																																																																																																																																								$sh = $sh[$key_cero];
-																																																																																																																																								$spreadsheet->getActiveSheet()
-																																																																																																																																									->fromArray(
-																																																																																																																																										$sh,
-																																																																																																																																										0,
-																																																																																																																																										$C . $row,
-																																																																																																																																										TRUE,
-																																																																																																																																										TRUE
-																																																																																																																																									);
-
-																																																																																																																																								*/
-
-
-				$sh_machinery = [];
-				foreach ($p_machinery as $key_value => $value) {
-					$i = 0;
-					$sum = 0;
-					$nr_machinery = [];
-					foreach ($value as $v) {
-						$nr_machinery[] = $v;
-						$i++;
-					}
-					$sh_machinery[] = $nr_machinery;
-				}
-
-				$spreadsheet->getActiveSheet()
-					->fromArray(
-						$sh_machinery,
-						0,
-						$C . ($row + 1),
-						TRUE
-					);
-
-				/*
-																																																																$sh_comment = [];
-																																																																$row++;
-																																																																foreach ($p_comment as $value) {
-																																																																	$i = 0;
-																																																																	$sum = 0;
-																																																																	$nr_comment = [];
-																																																																	foreach ($value as $v) {
-																																																																		$nr_comment[] = $v;
-																																																																		$i++;
-																																																																	}
-																																																																	$sh_comment[] = $nr_comment;
-																																																																}
-																																																																$spreadsheet->getActiveSheet()
-																																																																	->fromArray(
-																																																																		$sh_comment,
-																																																																		0,
-																																																																		$C . $row,
-																																																																		TRUE
-																																																																	);
-																																																																*/
-				$row += $roles;
-			}
-		}
-		$row = 1;
-		$titles = [
+		$spreadsheetTitles = [
 			"Área",
 			"Sub-area",
 			"Especialidad",
@@ -5863,14 +5338,246 @@ class Building_sites extends CI_Controller
 			"Comienzo Programado",
 			"Fin Programado",
 		];
+
+		$minAndMaxDates = $this->min_max_dates($building_site_id);
+
+		$minDate = $minAndMaxDates['min_date'];
+		$maxDate = $minAndMaxDates['max_date'];
+
+		//range of dates between minDate (inclusive) and maxDate (inclusive) 
+
+		$dates = [];
+		if ($minDate && $maxDate) {
+			$start = new DateTime($minDate);
+			$end = new DateTime($maxDate);
+			$end->modify('+1 day'); // Include the end date
+			$interval = new DateInterval('P1D');
+			$dateRange = new DatePeriod($start, $interval, $end);
+
+			foreach ($dateRange as $date) {
+				$dates[] = $date->format("Y-m-d");
+			}
+		}
+
+		//append the dates to the titles
+
+		$spreadsheetTitles = array_merge($spreadsheetTitles, $dates);
+
 		$spreadsheet->getActiveSheet()
 			->fromArray(
-				$titles,
+				$spreadsheetTitles,
 				NULL,
 				"A1"
 			);
+
+		$mainMatrix = [];
+		$zones = $this->db->select('*')->from('zone')->where('fk_building_site', $building_site_id)->get()->result();
+		//set name as value, and id as key
+		$zonesName = array_column($zones, 'name', 'id');
+		$zonesArea = array_column($zones, 'fk_area', 'id');
+
+		$areas = $this->db->select('*')->from('area')->where('fk_building_site', $building_site_id)->get()->result();
+		//set name as value, and id as key
+		$areas = array_column($areas, 'name', 'id');
+
+		$specialities = $this->db->select('*')->from('speciality')->where('fk_building_site', $building_site_id)->get()->result();
+		//set name as value, and id as key
+		$specialities = array_column($specialities, 'name', 'id');
+
+		$specialityRoles = $this->db->select('*')->from('speciality_role')->where('fk_building_site', $building_site_id)->get()->result();
+		//set name as value, and id as key
+		$specialityRoles = array_column($specialityRoles, 'name', 'id');
+
+		$activityData = $this->db->select('*')->from('activity_data')->where('fk_building_site', $building_site_id)->get()->result();
+		$activityRegistry = $this->db->select('*')->from('activity_registry')->where('fk_building_site', $building_site_id)->where('checked !=', null)->get()->result();
+
+		$supervisors = $this->db
+			->select('supervisor.id as sId, speciality.name as sName, speciality.id as spId, user.first_name as ufName, user.last_name as ulName')->from('supervisor')
+			->join('user', 'user.id = supervisor.fk_user')
+			->join('speciality', 'speciality.id = supervisor.fk_speciality')
+			->where('fk_building_site', $building_site_id)
+			->get()->result();
+
+		//$mainMatrix is the content that will be below the titles in the spreadsheet
+
+		//we will start from row 2, because row 1 is the titles
+
+		$row = 2;
+
+		/*
+		I will use the function 
+
+		$spreadsheet->getActiveSheet()
+			->fromArray(
+				ARRAY,
+				NULL,
+				"A{$row}"
+			);
+
+			to fill the data. let's construct the data in a matrix, and then fill it in the spreadsheet
+		*/
+
+		foreach ($activities as $activity) {
+			//to fill subArea, find the zones item which item.id is $activity->fk_zone
+			$subArea = $zonesName[$activity->fk_zone];
+			$area = $areas[$zonesArea[$activity->fk_zone]];
+			$speciality = $specialities[$activity->fk_speciality];
+			//supervisor could be more than one, we will append them to a string separated by commas
+			$supervisor = '';
+
+			foreach ($supervisors as $s) {
+				if ($s->spId == $activity->fk_speciality) {
+					$supervisor .= $s->ufName . ' ' . $s->ulName . ', ';
+				}
+			}
+
+			//remove the last comma and space
+			$supervisor = rtrim($supervisor, ', ');
+			//if there is no supervisor, set it to 'N/A'
+
+			$specialityRole = $specialityRoles[$activity->fk_speciality_role];
+			$activityCode = $activity->activity_code;
+			$activityName = $activity->name;
+			$activityDescription = '';
+			$activityUnit = $activity->unt;
+			$activityQty = $activity->qty;
+			$activityEff = $activity->eff;
+
+			//activityStart and activityEnd are rescued from activityData->activity_date_dt (min and max respectively)
+
+			$start = $this->db
+				->select('MIN(activity_date_dt) as start')
+				->from('activity_data')
+				->where('fk_building_site', $building_site_id)
+				->where('fk_activity', $activity->id)
+				->get()
+				->row();
+
+			$end = $this->db
+				->select('MAX(activity_date_dt) as end')
+				->from('activity_data')
+				->where('fk_building_site', $building_site_id)
+				->where('fk_activity', $activity->id)
+				->get()
+				->row();
+
+			$activityStart = $start->start;
+			$activityEnd = $end->end;
+
+			$activityStart = date('Y-m-d', strtotime($activityStart));
+			$activityEnd = date('Y-m-d', strtotime($activityEnd));
+
+			$duration = (strtotime($activityEnd) - strtotime($activityStart)) / (60 * 60 * 24);
+			if ($duration == 0) {
+				$duration = "0";
+			}
+
+			$mainMatrix[$row] = [
+				$area,
+				$subArea,
+				$speciality,
+				$supervisor,
+				$activityCode,
+				$activityName,
+				$activityDescription,
+				$specialityRole,
+				$activityUnit,
+				$activityQty,
+				$activityEff,
+				0, //Nº Trabajadores
+				0, //Trabajo
+				$duration, //Duracion
+				$activityStart, //Comienzo Programado
+				$activityEnd //Fin Programado
+			];
+
+			//export the spreadsheet
+
+			$row++;
+		}
+
+		$spreadsheet->getActiveSheet()
+			->fromArray(
+				$mainMatrix,
+				NULL,
+				"A2"
+			);
+
+		$secondaryMatrix = [];
+
+		//now we will fill the dates, and the data from activityRegistry (hh) which should be mapped to the dates in the appended titles.
+		//take in mind the base starting cell of data is Q2
+
+		$baseCell = 'Q2';
+		$baseRow = 1;
+
+		foreach ($activities as $activity) {
+			foreach ($dates as $date_key => $date) {
+				$activityRegistry = $this->db
+					->select('*')
+					->from('activity_registry')
+					->where('fk_building_site', $building_site_id)
+					->where('fk_activity', $activity->id)
+					->where('activity_date', $date)
+					->where('checked !=', null)
+					->order_by('id', 'DESC')
+					->limit(1)
+					->get()
+					->row();
+
+				if ($activityRegistry) {
+					if ($activityRegistry->hh > 0)
+						$secondaryMatrix[$baseRow][$date_key] = $activityRegistry->machinery;
+					else
+						$secondaryMatrix[$baseRow][$date_key] = 0;
+					$mainMatrix[($baseRow + 1)][11] += (float)$activityRegistry->hh;
+					$mainMatrix[($baseRow + 1)][12] += (int)$activityRegistry->workers;
+				} else {
+					$secondaryMatrix[$baseRow][$date_key] = 0;
+				}
+			}
+			$baseRow++;
+		}
+
+
+		$spreadsheet->getActiveSheet()
+			->fromArray(
+				$mainMatrix,
+				NULL,
+				"A2"
+			);
+
+
+		//d($secondaryMatrix);
+
+		//exit;
+
+		$spreadsheet->getActiveSheet()
+			->fromArray(
+				$secondaryMatrix,
+				NULL,
+				"Q2"
+			);
+
+		$spreadsheet->getActiveSheet()->getStyle('A1:P1')->getFont()->setBold(true);
+		$spreadsheet->getActiveSheet()->getStyle('A1:P1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+		$spreadsheet->getActiveSheet()->getStyle('A1:P1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+		// Set the width of the columns from column A to the last column with data
+
+		//first column by index 
+		$firstColumn = 1;
+		//last column by index
+		$lastColumn = $spreadsheet->getActiveSheet()->getHighestColumn();
+		//convert last column to index
+		$lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($lastColumn);
+
+		foreach (range($firstColumn, $lastColumn) as $columnIndex) {
+			$spreadsheet->getActiveSheet()->getColumnDimensionByColumn($columnIndex)->setAutoSize(true);
+		}
+
 		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-		header('Content-Disposition: attachment;filename="Planilla Avances Maquinariasa.xlsx"');
+		header('Content-Disposition: attachment;filename="Planilla Avances.xlsx"');
 		header('Cache-Control: max-age=0');
 		$writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
 		$writer->save('php://output');
@@ -5889,272 +5596,13 @@ class Building_sites extends CI_Controller
 		$this->load->model('activity_registry');
 		$this->load->model('activity_data');
 		$this->load->model('daily_report');
-		$tpa = 0;
+		$this->load->database();
+
 		$spreadsheet = new Spreadsheet();
 		$sheet = $spreadsheet->getActiveSheet();
-		$row = 1;
-		$activity_items = $this->activity->obtener(
-			[
-				[
-					'fk_building_site' => $building_site_id
-				]
-			]
-		);
-		$registry = [];
-		$registryDateCells = [];
-		$min_rec = 0;
-		$max_rec = 0;
-		foreach ($activity_items as $activity) {
-			$t = $this->activity_registry->obtener([
-				[
-					'fk_building_site' => $building_site_id,
-					'fk_activity' => $activity->id
-				]
-			]);
-			if (sizeof($t) > 0) {
-				$registry[$activity->activity_code][$t[0]->speciality->id][$t[0]->speciality_role->id] = $t;
-				foreach ($t as $record) {
-					if ($min_rec == 0 || $min_rec > strtotime($record->activity_date)) {
-						$min_rec = strtotime($record->activity_date);
-					}
-					if ($max_rec == $min_rec || $max_rec < strtotime($record->activity_date)) {
-						$max_rec = strtotime($record->activity_date);
-					}
-				}
-			}
-		}
-		$activity_data = $this->activity_data->obtener(
-			[
-				[
-					'fk_building_site' => $building_site_id
-				]
-			]
-		);
-		$dataDateCells = [];
-		foreach ($activity_data as $ad) {
-			if (!array_search(gmdate("Ymd", $ad->activity_date * 86400), $dataDateCells) !== false) {
-				$dataDateCells[] = gmdate("Ymd", $ad->activity_date * 86400);
-				if ($min_rec == 0 || $min_rec > $ad->activity_date * 86400) {
-					$min_rec = $ad->activity_date * 86400;
-				}
-				if ($max_rec == $min_rec || $max_rec < $ad->activity_date * 86400) {
-					$max_rec = $ad->activity_date * 86400;
-				}
-			}
-		}
-		for ($i = $min_rec; $i <= $max_rec; $i += 86400) {
-			$registryDateCells[] = gmdate("Ymd", $i);
-		}
-		$dataDateCells = array_merge($dataDateCells, $registryDateCells);
-		sort($dataDateCells, SORT_NUMERIC);
-		$dataDateCells = array_unique($dataDateCells);
-		$dataDateCells = array_values($dataDateCells);
-		$i = 0;
-		foreach ($dataDateCells as $k => $date) {
-			$sheet->setCellValueByColumnAndRow($i + 17, 1, substr($date, 6, 2) . '-' . substr($date, 4, 2) . '-' . substr($date, 0, 4));
-			$i++;
-		}
-		$cat_ad = [];
-		foreach ($activity_data as $ad) {
-			if (!isset($cat_ad[$ad->activity->activity_code])) {
-				$cat_ad[$ad->activity->activity_code] = [];
-			}
-			if (!isset($cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality])) {
-				$cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality] = [];
-			}
-			if (!isset($cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality][$ad->activity->fk_speciality_role])) {
-				$cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality][$ad->activity->fk_speciality_role] = [];
-			}
-			$cat_ad[$ad->activity->activity_code][$ad->activity->fk_speciality][$ad->activity->fk_speciality_role][] = $ad;
-		}
-		$C = "Q"; // define la columna donde empieza la fecha
-		foreach ($cat_ad as $a) {
-			$row++;
-			$n = $a;
-			sort($n);
-			sort($n[0]);
-			sort($n[0][0]);
-			sort($n[0][0][0]);
-			$n = $n[0][0][0]->activity;
-			$titles = [
-				$n->zone->name,
-				"",
-				$n->speciality->name,
-				"",
-				$n->activity_code,
-				"",
-				$n->name,
-				"",
-				$n->unt,
-				$n->qty,
-				$n->eff,
-			];
-			$spreadsheet->getActiveSheet()
-				->fromArray(
-					$titles,
-					NULL,
-					"A{$row}"
-				)
-				->setCellValueExplicit(
-					"E{$row}",
-					$n->activity_code,
-					\PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
-				);
-			//$row++;
-			foreach ($a as $s) {
-				$p_avance = [];
-				$p_machinery = [];
-				$p_comment = [];
-				$roles = 0;
-				$t_row = $row;
-				$x = 0;
-				foreach ($s as $k => $r) {
-					$first = false;
-					$first_column = 18;
-					$sheet->getCell("H{$t_row}")->setValue($r[0]->speciality_role->name);
-					$p_avance[$x] = [];
-					foreach ($r as $d) {
-						$p_avance[$x][gmdate("Ymd", $d->activity_date * 86400)] = floatval($d->p_avance);
-						$p_machinery[$x][gmdate("Ymd", $d->activity_date * 86400)] = $d->machinery;
-						$p_comment[$x][gmdate("Ymd", $d->activity_date * 86400)] = $d->comment;
-						$tpa += $d->p_avance;
-						if ($first == false) {
-							if ($d->p_avance != 0)
-								$first = true;
-							else {
-								$first_column++;
-							}
-						}
-					}
-					foreach ($dataDateCells as $date) {
-						if (!isset($p_avance[$x][$date])) {
-							$p_avance[$x][$date] = '';
-						}
-						if (!isset($p_machinery[$x][$date])) {
-							$p_machinery[$x][$date] = '';
-						}
-						if (!isset($p_comment[$x][$date])) {
-							$p_comment[$x][$date] = '';
-						}
-					}
-					ksort($p_avance[$x], SORT_NUMERIC);
-					ksort($p_machinery[$x], SORT_NUMERIC);
-					ksort($p_comment[$x], SORT_NUMERIC);
-					//$t_row++;
-					$x++;
-					//$sheet->getCell("G{$t_row}")->setValue("AVANCE DESCRITO EN TERRENO");
-					//$t_row++;
-					foreach ($dataDateCells as $date) {
-						if (!isset($p_avance[$x][$date])) {
-							$p_avance[$x][$date] = '';
-						}
-						if (!isset($p_machinery[$x][$date])) {
-							$p_machinery[$x][$date] = '';
-						}
-						if (!isset($p_comment[$x][$date])) {
-							$p_comment[$x][$date] = '';
-						}
-						foreach ($r as $data) {
-							if (isset($registry[$data->activity->activity_code][$data->fk_speciality][$data->fk_speciality_role])) {
-								foreach ($registry[$data->activity->activity_code][$data->fk_speciality][$data->fk_speciality_role] as $round) {
-									if ($date == str_replace("-", "", $round->activity_date)) {
-										$p_avance[$x][$date] = $round->p_avance;
-										$p_machinery[$x][$date] = $round->machinery;
-										$p_comment[$x][$date] = $round->comment;
-									}
-								}
-							}
-						}
-					}
-					$x++;
-					//$roles++;
-					//$roles++;
-					//$roles++;
-				}
+		$activities = $this->db->select('*')->from('activity')->where('fk_building_site', $building_site_id)->get()->result();
 
-				$sh = [];
-				/**
-				 * ricardo.munoz
-				 * arregla problema con arreglos de 2 dimensiones
-				 * se selecciona el arreglo que contenga "numeros" 
-				 */
-
-				/*
-																																																																																																																																								$key_cero = 0;
-																																																																																																																																								foreach ($p_avance as $key_value => $value) {
-																																																																																																																																									$i = 0;
-																																																																																																																																									$sum = 0;
-																																																																																																																																									$nr = [];
-																																																																																																																																									foreach ($value as $v) {
-																																																																																																																																										if (is_string($v) && 0 <> (float)$v)
-																																																																																																																																											$key_cero = $key_value;
-																																																																																																																																										$nr[] = $v;
-																																																																																																																																										$i++;
-																																																																																																																																									}
-																																																																																																																																									$sh[] = $nr;
-																																																																																																																																								}
-																																																																																																																																								$sh = $sh[$key_cero];
-																																																																																																																																								$spreadsheet->getActiveSheet()
-																																																																																																																																									->fromArray(
-																																																																																																																																										$sh,
-																																																																																																																																										0,
-																																																																																																																																										$C . $row,
-																																																																																																																																										TRUE,
-																																																																																																																																										TRUE
-																																																																																																																																									);
-
-																																																																																																																																								*/
-
-				/*
-																																																																																																																																								$sh_machinery = [];
-																																																																																																																																								$row++;
-																																																																																																																																								foreach ($p_machinery as $value) {
-																																																																																																																																									$i = 0;
-																																																																																																																																									$sum = 0;
-																																																																																																																																									$nr_machinery = [];
-																																																																																																																																									foreach ($value as $v) {
-																																																																																																																																										$nr_machinery[] = $v;
-																																																																																																																																										$i++;
-																																																																																																																																									}
-																																																																																																																																									$sh_machinery[] = $nr_machinery;
-																																																																																																																																								}
-																																																																																																																																								$spreadsheet->getActiveSheet()
-																																																																																																																																									->fromArray(
-																																																																																																																																										$sh_machinery,
-																																																																																																																																										0,
-																																																																																																																																										$C . $row,
-																																																																																																																																										TRUE
-																																																																																																																																									);
-																																																																																																																																								*/
-
-
-				$sh_comment = [];
-				$key_cero = 0;
-				foreach ($p_comment as $key_value => $value) {
-					$i = 0;
-					$sum = 0;
-					$nr_comment = [];
-					foreach ($value as $v) {
-						$nr_comment[] = $v;
-						$i++;
-					}
-					$sh_comment[] = $nr_comment;
-				}
-				//filter $sh_comment set 0 to ''
-
-				$spreadsheet->getActiveSheet()
-					->fromArray(
-						$sh_comment,
-						0,
-						$C . ($row + 1),
-						TRUE
-					);
-
-				$row += $roles;
-			}
-		}
-		$row = 1;
-		$titles = [
+		$spreadsheetTitles = [
 			"Área",
 			"Sub-area",
 			"Especialidad",
@@ -6172,14 +5620,246 @@ class Building_sites extends CI_Controller
 			"Comienzo Programado",
 			"Fin Programado",
 		];
+
+		$minAndMaxDates = $this->min_max_dates($building_site_id);
+
+		$minDate = $minAndMaxDates['min_date'];
+		$maxDate = $minAndMaxDates['max_date'];
+
+		//range of dates between minDate (inclusive) and maxDate (inclusive) 
+
+		$dates = [];
+		if ($minDate && $maxDate) {
+			$start = new DateTime($minDate);
+			$end = new DateTime($maxDate);
+			$end->modify('+1 day'); // Include the end date
+			$interval = new DateInterval('P1D');
+			$dateRange = new DatePeriod($start, $interval, $end);
+
+			foreach ($dateRange as $date) {
+				$dates[] = $date->format("Y-m-d");
+			}
+		}
+
+		//append the dates to the titles
+
+		$spreadsheetTitles = array_merge($spreadsheetTitles, $dates);
+
 		$spreadsheet->getActiveSheet()
 			->fromArray(
-				$titles,
+				$spreadsheetTitles,
 				NULL,
 				"A1"
 			);
+
+		$mainMatrix = [];
+		$zones = $this->db->select('*')->from('zone')->where('fk_building_site', $building_site_id)->get()->result();
+		//set name as value, and id as key
+		$zonesName = array_column($zones, 'name', 'id');
+		$zonesArea = array_column($zones, 'fk_area', 'id');
+
+		$areas = $this->db->select('*')->from('area')->where('fk_building_site', $building_site_id)->get()->result();
+		//set name as value, and id as key
+		$areas = array_column($areas, 'name', 'id');
+
+		$specialities = $this->db->select('*')->from('speciality')->where('fk_building_site', $building_site_id)->get()->result();
+		//set name as value, and id as key
+		$specialities = array_column($specialities, 'name', 'id');
+
+		$specialityRoles = $this->db->select('*')->from('speciality_role')->where('fk_building_site', $building_site_id)->get()->result();
+		//set name as value, and id as key
+		$specialityRoles = array_column($specialityRoles, 'name', 'id');
+
+		$activityData = $this->db->select('*')->from('activity_data')->where('fk_building_site', $building_site_id)->get()->result();
+		$activityRegistry = $this->db->select('*')->from('activity_registry')->where('fk_building_site', $building_site_id)->where('checked !=', null)->get()->result();
+
+		$supervisors = $this->db
+			->select('supervisor.id as sId, speciality.name as sName, speciality.id as spId, user.first_name as ufName, user.last_name as ulName')->from('supervisor')
+			->join('user', 'user.id = supervisor.fk_user')
+			->join('speciality', 'speciality.id = supervisor.fk_speciality')
+			->where('fk_building_site', $building_site_id)
+			->get()->result();
+
+		//$mainMatrix is the content that will be below the titles in the spreadsheet
+
+		//we will start from row 2, because row 1 is the titles
+
+		$row = 2;
+
+		/*
+		I will use the function 
+
+		$spreadsheet->getActiveSheet()
+			->fromArray(
+				ARRAY,
+				NULL,
+				"A{$row}"
+			);
+
+			to fill the data. let's construct the data in a matrix, and then fill it in the spreadsheet
+		*/
+
+		foreach ($activities as $activity) {
+			//to fill subArea, find the zones item which item.id is $activity->fk_zone
+			$subArea = $zonesName[$activity->fk_zone];
+			$area = $areas[$zonesArea[$activity->fk_zone]];
+			$speciality = $specialities[$activity->fk_speciality];
+			//supervisor could be more than one, we will append them to a string separated by commas
+			$supervisor = '';
+
+			foreach ($supervisors as $s) {
+				if ($s->spId == $activity->fk_speciality) {
+					$supervisor .= $s->ufName . ' ' . $s->ulName . ', ';
+				}
+			}
+
+			//remove the last comma and space
+			$supervisor = rtrim($supervisor, ', ');
+			//if there is no supervisor, set it to 'N/A'
+
+			$specialityRole = $specialityRoles[$activity->fk_speciality_role];
+			$activityCode = $activity->activity_code;
+			$activityName = $activity->name;
+			$activityDescription = '';
+			$activityUnit = $activity->unt;
+			$activityQty = $activity->qty;
+			$activityEff = $activity->eff;
+
+			//activityStart and activityEnd are rescued from activityData->activity_date_dt (min and max respectively)
+
+			$start = $this->db
+				->select('MIN(activity_date_dt) as start')
+				->from('activity_data')
+				->where('fk_building_site', $building_site_id)
+				->where('fk_activity', $activity->id)
+				->get()
+				->row();
+
+			$end = $this->db
+				->select('MAX(activity_date_dt) as end')
+				->from('activity_data')
+				->where('fk_building_site', $building_site_id)
+				->where('fk_activity', $activity->id)
+				->get()
+				->row();
+
+			$activityStart = $start->start;
+			$activityEnd = $end->end;
+
+			$activityStart = date('Y-m-d', strtotime($activityStart));
+			$activityEnd = date('Y-m-d', strtotime($activityEnd));
+
+			$duration = (strtotime($activityEnd) - strtotime($activityStart)) / (60 * 60 * 24);
+			if ($duration == 0) {
+				$duration = "0";
+			}
+
+			$mainMatrix[$row] = [
+				$area,
+				$subArea,
+				$speciality,
+				$supervisor,
+				$activityCode,
+				$activityName,
+				$activityDescription,
+				$specialityRole,
+				$activityUnit,
+				$activityQty,
+				$activityEff,
+				0, //Nº Trabajadores
+				0, //Trabajo
+				$duration, //Duracion
+				$activityStart, //Comienzo Programado
+				$activityEnd //Fin Programado
+			];
+
+			//export the spreadsheet
+
+			$row++;
+		}
+
+		$spreadsheet->getActiveSheet()
+			->fromArray(
+				$mainMatrix,
+				NULL,
+				"A2"
+			);
+
+		$secondaryMatrix = [];
+
+		//now we will fill the dates, and the data from activityRegistry (hh) which should be mapped to the dates in the appended titles.
+		//take in mind the base starting cell of data is Q2
+
+		$baseCell = 'Q2';
+		$baseRow = 1;
+
+		foreach ($activities as $activity) {
+			foreach ($dates as $date_key => $date) {
+				$activityRegistry = $this->db
+					->select('*')
+					->from('activity_registry')
+					->where('fk_building_site', $building_site_id)
+					->where('fk_activity', $activity->id)
+					->where('activity_date', $date)
+					->where('checked !=', null)
+					->order_by('id', 'DESC')
+					->limit(1)
+					->get()
+					->row();
+
+				if ($activityRegistry) {
+					if ($activityRegistry->hh > 0)
+						$secondaryMatrix[$baseRow][$date_key] = $activityRegistry->comment;
+					else
+						$secondaryMatrix[$baseRow][$date_key] = 0;
+					$mainMatrix[($baseRow + 1)][11] += (float)$activityRegistry->hh;
+					$mainMatrix[($baseRow + 1)][12] += (int)$activityRegistry->workers;
+				} else {
+					$secondaryMatrix[$baseRow][$date_key] = 0;
+				}
+			}
+			$baseRow++;
+		}
+
+
+		$spreadsheet->getActiveSheet()
+			->fromArray(
+				$mainMatrix,
+				NULL,
+				"A2"
+			);
+
+
+		//d($secondaryMatrix);
+
+		//exit;
+
+		$spreadsheet->getActiveSheet()
+			->fromArray(
+				$secondaryMatrix,
+				NULL,
+				"Q2"
+			);
+
+		$spreadsheet->getActiveSheet()->getStyle('A1:P1')->getFont()->setBold(true);
+		$spreadsheet->getActiveSheet()->getStyle('A1:P1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+		$spreadsheet->getActiveSheet()->getStyle('A1:P1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+		// Set the width of the columns from column A to the last column with data
+
+		//first column by index 
+		$firstColumn = 1;
+		//last column by index
+		$lastColumn = $spreadsheet->getActiveSheet()->getHighestColumn();
+		//convert last column to index
+		$lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($lastColumn);
+
+		foreach (range($firstColumn, $lastColumn) as $columnIndex) {
+			$spreadsheet->getActiveSheet()->getColumnDimensionByColumn($columnIndex)->setAutoSize(true);
+		}
+
 		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-		header('Content-Disposition: attachment;filename="Planilla Avances Notas.xlsx"');
+		header('Content-Disposition: attachment;filename="Planilla Avances.xlsx"');
 		header('Cache-Control: max-age=0');
 		$writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
 		$writer->save('php://output');
