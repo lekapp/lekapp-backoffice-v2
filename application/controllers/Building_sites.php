@@ -4967,8 +4967,8 @@ class Building_sites extends CI_Controller
 						$secondaryMatrix[$baseRow][$date_key] = $activityRegistry->p_avance;
 					else
 						$secondaryMatrix[$baseRow][$date_key] = 0;
-					$mainMatrix[($baseRow + 1)][11] += (float)$activityRegistry->hh;
-					$mainMatrix[($baseRow + 1)][12] += (int)$activityRegistry->workers;
+					$mainMatrix[($baseRow + 1)][12] += (float)$activityRegistry->hh;
+					$mainMatrix[($baseRow + 1)][11] += (int)$activityRegistry->workers;
 				} else {
 					$secondaryMatrix[$baseRow][$date_key] = 0;
 				}
@@ -5248,8 +5248,8 @@ class Building_sites extends CI_Controller
 						$secondaryMatrix[$baseRow][$date_key] = $activityRegistry->hh;
 					else
 						$secondaryMatrix[$baseRow][$date_key] = 0;
-					$mainMatrix[($baseRow + 1)][11] += (float)$activityRegistry->hh;
-					$mainMatrix[($baseRow + 1)][12] += (int)$activityRegistry->workers;
+					$mainMatrix[($baseRow + 1)][12] += (float)$activityRegistry->hh;
+					$mainMatrix[($baseRow + 1)][11] += (int)$activityRegistry->workers;
 				} else {
 					$secondaryMatrix[$baseRow][$date_key] = 0;
 				}
@@ -5530,8 +5530,8 @@ class Building_sites extends CI_Controller
 						$secondaryMatrix[$baseRow][$date_key] = $activityRegistry->machinery;
 					else
 						$secondaryMatrix[$baseRow][$date_key] = 0;
-					$mainMatrix[($baseRow + 1)][11] += (float)$activityRegistry->hh;
-					$mainMatrix[($baseRow + 1)][12] += (int)$activityRegistry->workers;
+					$mainMatrix[($baseRow + 1)][12] += (float)$activityRegistry->hh;
+					$mainMatrix[($baseRow + 1)][11] += (int)$activityRegistry->workers;
 				} else {
 					$secondaryMatrix[$baseRow][$date_key] = 0;
 				}
@@ -5812,8 +5812,8 @@ class Building_sites extends CI_Controller
 						$secondaryMatrix[$baseRow][$date_key] = $activityRegistry->comment;
 					else
 						$secondaryMatrix[$baseRow][$date_key] = 0;
-					$mainMatrix[($baseRow + 1)][11] += (float)$activityRegistry->hh;
-					$mainMatrix[($baseRow + 1)][12] += (int)$activityRegistry->workers;
+					$mainMatrix[($baseRow + 1)][12] += (float)$activityRegistry->hh;
+					$mainMatrix[($baseRow + 1)][11] += (int)$activityRegistry->workers;
 				} else {
 					$secondaryMatrix[$baseRow][$date_key] = 0;
 				}
