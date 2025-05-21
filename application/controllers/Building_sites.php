@@ -4835,24 +4835,8 @@ class Building_sites extends CI_Controller
 			->where('fk_building_site', $building_site_id)
 			->get()->result();
 
-		//$mainMatrix is the content that will be below the titles in the spreadsheet
-
-		//we will start from row 2, because row 1 is the titles
 
 		$row = 2;
-
-		/*
-		I will use the function 
-
-		$spreadsheet->getActiveSheet()
-			->fromArray(
-				ARRAY,
-				NULL,
-				"A{$row}"
-			);
-
-			to fill the data. let's construct the data in a matrix, and then fill it in the spreadsheet
-		*/
 
 		foreach ($activities as $activity) {
 			//to fill subArea, find the zones item which item.id is $activity->fk_zone
@@ -4942,9 +4926,6 @@ class Building_sites extends CI_Controller
 
 		$secondaryMatrix = [];
 
-		//now we will fill the dates, and the data from activityRegistry (hh) which should be mapped to the dates in the appended titles.
-		//take in mind the base starting cell of data is Q2
-
 		$baseCell = 'Q2';
 		$baseRow = 1;
 
@@ -4984,9 +4965,6 @@ class Building_sites extends CI_Controller
 			);
 
 
-		//d($secondaryMatrix);
-
-		//exit;
 
 		$spreadsheet->getActiveSheet()
 			->fromArray(
@@ -4999,11 +4977,8 @@ class Building_sites extends CI_Controller
 		$spreadsheet->getActiveSheet()->getStyle('A1:P1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
 		$spreadsheet->getActiveSheet()->getStyle('A1:P1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
-		// Set the width of the columns from column A to the last column with data
-
-		//first column by index 
 		$firstColumn = 1;
-		//last column by index
+
 		$lastColumn = $spreadsheet->getActiveSheet()->getHighestColumn();
 
 		$lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($lastColumn);

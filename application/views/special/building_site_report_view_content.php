@@ -120,7 +120,7 @@
                                                 foreach ($activity->worker_list as $worker) {
                                                     $worker_list_assisted[$worker->worker_id] = $worker;
                                                 }
-                                                ?>
+                                            ?>
                                                 <tr>
                                                     <td>
                                                         <?php echo $activity->activity_code; ?>
@@ -144,10 +144,10 @@
                                                         <?php echo $activity->machinery; ?>
                                                     </td>
                                                 </tr>
-                                                <?php
+                                            <?php
                                             endforeach;
                                             ?>
-                                            <?php
+                                        <?php
                                         endforeach;
                                         ?>
                                     </tbody>
@@ -247,7 +247,7 @@
                                             </tr>
                                             <?php $x++; ?>
 
-                                            <?php
+                                        <?php
                                         endforeach; ?>
                                     </tbody>
                                 </table>
@@ -323,28 +323,46 @@
                             <div class="col-sm-6" style="padding-top: 200px;">
                                 <hr style="border-color: #000; width: 80%;">
                                 <p style="text-align: center;">
-                                    <?php echo $data->admin_name; ?>
+                                    <?php echo $data->b1_n; ?>
                                 </p>
-                                <label class="font-weight-bold">Adm. del Contrato</label>
+                                <p style="text-align: center;">
+                                    <?php echo $data->b1_ne; ?>
+                                </p>
+                                <label class="font-weight-bold">
+                                    <?php echo $data->b1_c; ?>
+                                </label>
                             </div>
                             <div class="col-sm-6" style="padding-top: 200px;">
                                 <hr style="border-color: #000; width: 80%;">
                                 <p style="text-align: center;">
-                                    <?php echo $data->office_chief; ?>
+                                    <?php echo $data->b2_n; ?>
                                 </p>
-                                <label class="font-weight-bold">Jefe de Oficina</label>
+                                <p style="text-align: center;">
+                                    <?php echo $data->b2_ne; ?>
+                                </p>
+                                <label class="font-weight-bold">
+                                    <?php echo $data->b2_c; ?>
+                                </label>
                             </div>
                             <div class="col-sm-6" style="padding-top: 200px;">
                                 <hr style="border-color: #000; width: 80%;">
                                 <p style="text-align: center;">
-                                    <?php echo $data->terrain_chief; ?>
+                                    <?php echo $data->b3_n; ?>
                                 </p>
-                                <label class="font-weight-bold">Jefe de Terreno</label>
+                                <p style="text-align: center;">
+                                    <?php echo $data->b3_ne; ?>
+                                </p>
+                                <label class="font-weight-bold">
+                                    <?php echo $data->b3_c; ?>
+                                </label>
                             </div>
                             <div class="col-sm-6" style="padding-top: 200px;">
                                 <hr style="border-color: #000; width: 80%;">
                                 <p style="text-align: center;">
                                     <?php echo $data->b4_n; ?>
+                                </p>
+                                <p style="text-align: center;">
+                                    <?php echo $data->b4_ne; ?>
                                 </p>
                                 <label class="font-weight-bold">
                                     <?php echo $data->b4_c; ?>

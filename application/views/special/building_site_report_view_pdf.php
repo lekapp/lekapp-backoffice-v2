@@ -1,7 +1,7 @@
 <style>
-.photo-title {
-    height: 65px;
-}
+    .photo-title {
+        height: 65px;
+    }
 </style>
 
 <!-- Feeds Section-->
@@ -123,46 +123,46 @@
                                         $worker_list_assisted = [];
                                         $data->important_activities = json_decode($data->important_activities);
                                         foreach ($data->important_activities as $zone_activities): ?>
-                                        <tr>
-                                            <td colspan="4">
-                                                <h4>
-                                                    <strong>
-                                                        <p>AREA: <?php echo $zone_activities->area; ?></p>
-                                                        <p>ZONA: <?php echo $zone_activities->name; ?></p>
-                                                    </strong>
-                                                </h4>
-                                            </td>
-                                        </tr>
-                                        <?php
+                                            <tr>
+                                                <td colspan="4">
+                                                    <h4>
+                                                        <strong>
+                                                            <p>AREA: <?php echo $zone_activities->area; ?></p>
+                                                            <p>ZONA: <?php echo $zone_activities->name; ?></p>
+                                                        </strong>
+                                                    </h4>
+                                                </td>
+                                            </tr>
+                                            <?php
                                             foreach ($zone_activities->activities as $activity):
                                                 foreach ($activity->worker_list as $worker) {
                                                     $worker_list_assisted[$worker->worker_id] = $worker;
                                                 }
-                                                ?>
-                                        <tr>
-                                            <td>
-                                                <?php echo $activity->activity_code; ?>
-                                            </td>
-                                            <td>
-                                                <?php echo $activity->activity; ?>
-                                            </td>
-                                            <td>
-                                                <?php echo $activity->workers; ?>
-                                            </td>
-                                            <td>
-                                                <?php echo $activity->hh; ?>
-                                            </td>
-                                            <td>
-                                                <?php echo $activity->p_avance; ?>
-                                            </td>
-                                            <td>
-                                                <?php echo $activity->comment; ?>
-                                            </td>
-                                            <td>
-                                                <?php echo $activity->machinery; ?>
-                                            </td>
-                                        </tr>
-                                        <?php
+                                            ?>
+                                                <tr>
+                                                    <td>
+                                                        <?php echo $activity->activity_code; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php echo $activity->activity; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php echo $activity->workers; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php echo $activity->hh; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php echo $activity->p_avance; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php echo $activity->comment; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php echo $activity->machinery; ?>
+                                                    </td>
+                                                </tr>
+                                            <?php
                                             endforeach;
                                             ?>
                                         <?php
@@ -221,30 +221,30 @@
                             <div class="row col-md-12">
                                 <?php
                                 foreach ($data->photos as $k => $entry): ?>
-                                <div class="col-sm-3 my-3">
-                                    <div class="row">
-                                        <div class="col-12 mb-2 photo-title">
+                                    <div class="col-sm-3 my-3">
+                                        <div class="row">
+                                            <div class="col-12 mb-2 photo-title">
 
-                                            <?= $data->photos_data[$k]->name ?>
+                                                <?= $data->photos_data[$k]->name ?>
 
-                                        </div>
-                                        <div class="col-12">
-                                            <img width="100%" height="auto" class="img-fluid"
-                                                src="<?php echo asset_img($entry->photo) ?>" />
-                                        </div>
-                                        <div class="photo-title">
-                                            &nbsp;
+                                            </div>
+                                            <div class="col-12">
+                                                <img width="100%" height="auto" class="img-fluid"
+                                                    src="<?php echo asset_img($entry->photo) ?>" />
+                                            </div>
+                                            <div class="photo-title">
+                                                &nbsp;
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
                                 <?php endforeach; ?>
                             </div>
 
                             <script>
-                            let rotated = document.querySelectorAll('.rotated');
-                            rotated.forEach((el) => {
-                                el.style.transform = 'rotate(90deg)';
-                            });
+                                let rotated = document.querySelectorAll('.rotated');
+                                rotated.forEach((el) => {
+                                    el.style.transform = 'rotate(90deg)';
+                                });
                             </script>
 
                         </div>
@@ -271,13 +271,13 @@
                                         $x = 1;
                                         foreach ($data->hh_role as $k => $v): ?>
 
-                                        <tr>
-                                            <th scope="row"><?= $x ?></th>
-                                            <td><?= $v->name ?></td>
-                                            <td><?= $v->workers ?></td>
-                                            <td><?= $v->hh ?></td>
-                                        </tr>
-                                        <?php $x++; ?>
+                                            <tr>
+                                                <th scope="row"><?= $x ?></th>
+                                                <td><?= $v->name ?></td>
+                                                <td><?= $v->workers ?></td>
+                                                <td><?= $v->hh ?></td>
+                                            </tr>
+                                            <?php $x++; ?>
 
                                         <?php
                                         endforeach; ?>
@@ -334,20 +334,20 @@
                                 <tbody>
                                     <?php
                                     foreach ($data->workers_in_site as $worker): ?>
-                                    <tr>
-                                        <td><?= $worker->name ?></td>
-                                        <td><?= $worker->dni ?></td>
-                                        <td><?= $worker->speciality_name ?></td>
-                                        <td>
-                                            <?php
+                                        <tr>
+                                            <td><?= $worker->name ?></td>
+                                            <td><?= $worker->dni ?></td>
+                                            <td><?= $worker->speciality_name ?></td>
+                                            <td>
+                                                <?php
                                                 if (isset($worker_list_assisted[$worker->id])) {
                                                     echo "<span class='text-success'>Asistió</span>";
                                                 } else {
                                                     echo "No Asistió";
                                                 }
                                                 ?>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                        </tr>
                                     <?php endforeach; ?>
                                 </tbody>
 
@@ -359,28 +359,46 @@
                             <div class="col-sm-6" style="padding-top: 250px;">
                                 <hr style="border-color: #000; width: 80%;">
                                 <p style="text-align: center;">
-                                    <?php echo $data->admin_name; ?>
+                                    <?php echo $data->b1_n; ?>
                                 </p>
-                                <label class="font-weight-bold">Adm. del Contrato</label>
+                                <p style="text-align: center;">
+                                    <?php echo $data->b1_ne; ?>
+                                </p>
+                                <label class="font-weight-bold">
+                                    <?php echo $data->b1_c; ?>
+                                </label>
                             </div>
                             <div class="col-sm-6" style="padding-top: 250px;">
                                 <hr style="border-color: #000; width: 80%;">
                                 <p style="text-align: center;">
-                                    <?php echo $data->office_chief; ?>
+                                    <?php echo $data->b2_n; ?>
                                 </p>
-                                <label class="font-weight-bold">Jefe de Oficina</label>
+                                <p style="text-align: center;">
+                                    <?php echo $data->b2_ne; ?>
+                                </p>
+                                <label class="font-weight-bold">
+                                    <?php echo $data->b2_c; ?>
+                                </label>
                             </div>
                             <div class="col-sm-6" style="padding-top: 250px;">
                                 <hr style="border-color: #000; width: 80%;">
                                 <p style="text-align: center;">
-                                    <?php echo $data->terrain_chief; ?>
+                                    <?php echo $data->b3_n; ?>
                                 </p>
-                                <label class="font-weight-bold">Jefe de Terreno</label>
+                                <p style="text-align: center;">
+                                    <?php echo $data->b3_ne; ?>
+                                </p>
+                                <label class="font-weight-bold">
+                                    <?php echo $data->b3_c; ?>
+                                </label>
                             </div>
                             <div class="col-sm-6" style="padding-top: 250px;">
                                 <hr style="border-color: #000; width: 80%;">
                                 <p style="text-align: center;">
                                     <?php echo $data->b4_n; ?>
+                                </p>
+                                <p style="text-align: center;">
+                                    <?php echo $data->b4_ne; ?>
                                 </p>
                                 <label class="font-weight-bold">
                                     <?php echo $data->b4_c; ?>
