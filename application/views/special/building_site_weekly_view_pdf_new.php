@@ -188,27 +188,31 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                 <tbody>
                     <?php
                     $dtz = new DateTimeZone('America/Santiago');
-                    if (sizeof($json_data->milestones) == 0) {
+                    if (isset($json_data->milestones)):
+                        if (sizeof($json_data->milestones) == 0) {
+                            echo "<tr><td colspan='3'>No hay hitos para mostrar</td></tr>";
+                        }
+                        foreach ($json_data->milestones as $milestone):
+                    ?>
+                            <tr>
+                                <td>
+                                    <?= $milestone->name ?>
+                                </td>
+                                <td>
+                                    <?= $milestone->type ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    $dt = new DateTime($milestone->date, $dtz);
+                                    echo $dt->format('d-m-Y');
+                                    ?>
+                                </td>
+                            </tr>
+                    <?php
+                        endforeach;
+                    else:
                         echo "<tr><td colspan='3'>No hay hitos para mostrar</td></tr>";
-                    }
-                    foreach ($json_data->milestones as $milestone):
-                        ?>
-                        <tr>
-                            <td>
-                                <?= $milestone->name ?>
-                            </td>
-                            <td>
-                                <?= $milestone->type ?>
-                            </td>
-                            <td>
-                                <?php
-                                $dt = new DateTime($milestone->date, $dtz);
-                                echo $dt->format('d-m-Y');
-                                ?>
-                            </td>
-                        </tr>
-                        <?php
-                    endforeach;
+                    endif;
                     ?>
                 </tbody>
             </table>
@@ -395,7 +399,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
 
         <?php
         foreach ($json_data->specialities as $speciality):
-            ?>
+        ?>
 
             <hr>
 
@@ -547,7 +551,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
 
             </div>
 
-            <?php
+        <?php
         endforeach;
         ?>
 
