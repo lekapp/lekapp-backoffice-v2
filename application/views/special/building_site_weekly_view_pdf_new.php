@@ -188,7 +188,7 @@ $highestProgrammedDay = $dthpd->setTimestamp($highestProgrammedDay)->format('d-m
                 <tbody>
                     <?php
                     $dtz = new DateTimeZone('America/Santiago');
-                    if (isset($json_data->milestones)):
+                    if (isset($json_data->milestones) && is_array($json_data->milestones)):
                         if (sizeof($json_data->milestones) == 0) {
                             echo "<tr><td colspan='3'>No hay hitos para mostrar</td></tr>";
                         }
